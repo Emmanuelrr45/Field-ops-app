@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Agent - My Performance Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <!-- AGENT LOGIN VIEW -->
+    <div id="agentLoginContainer" class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
+            <div class="text-center">
+                <h1 class="text-2xl font-bold text-gray-900">Agent Portal Login</h1>
+                <p class="text-sm text-gray-500 mt-1">Enter your exact Agent Name to view your reports</p>
+            </div>
+            <form id="agentLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Agent Name</label>
+                    <input type="text" id="loginAgentName" required placeholder="e.g. John Doe" class="w-full mt-1 p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    View My Report
+                </button>
+            </form>
+            <div class="text-center">
+                <a href="index.html" class="text-sm text-blue-600 hover:underline">&larr; Back to Portal Menu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGENT DASHBOARD VIEW -->
+    <div id="agentDashboardContainer" class="hidden min-h-screen flex flex-col">
+        <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow-md">
+            <div>
+                <h1 class="text-xl font-bold">My Performance Report</h1>
+                <p id="agentGreeting" class="text-sm text-blue-200"></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+                    Download Excel (CSV)
+                </button>
+                <button id="agentLogoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6">
+            <!-- METRICS CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                    <p class="text-sm text-gray-500 font-medium">Total Visits Done</p>
+                    <p id="statVisitsCount" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                    <p class="text-sm text-gray-500 font-medium">Total Collected (KSh)</p>
+                    <p id="statTotalCollected" class="text-2xl font-bold text-green-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                    <p class="text-sm text-gray-500 font-medium">Total Expenses Incurred (KSh)</p>
+                    <p id="statTotalExpenses" class="text-2xl font-bold text-orange-600 mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- VISITS HISTORY TABLE -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-bold text-gray-800">My Visit Logs & Accounts Visited</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                                <th class="p-3">Date</th>
+                                <th class="p-3">CFID</th>
+                                <th class="p-3">Customer Name</th>
+                                <th class="p-3">Account Number</th>
+                                <th class="p-3">Client Name</th>
+                                <th class="p-3">Outcome</th>
+                                <th class="p-3">Collected (KSh)</th>
+                                <th class="p-3">Expenses (KSh)</th>
+                                <th class="p-3">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentVisitsTableBody" class="divide-y divide-gray-200 text-sm">
+                            <!-- Dynamically loaded rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="agent-dashboard.js"></script>
+</body>
+</html>
