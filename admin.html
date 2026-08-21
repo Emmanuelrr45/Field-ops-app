@@ -117,14 +117,13 @@
                 <th class="p-3 text-green-700">Paid</th>
                 <th class="p-3 text-blue-700">Promise to Pay</th>
                 <th class="p-3">Expenses</th>
-                <th class="p-3">Location</th>
-                <th class="p-3">Photo</th>
+                <th class="p-3">Photos</th>
                 <th class="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="visitsTableBody" class="divide-y divide-gray-200 text-sm">
               <tr>
-                <td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td>
+                <td colspan="10" class="p-4 text-center text-gray-500">Loading records...</td>
               </tr>
             </tbody>
           </table>
@@ -132,6 +131,70 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-gray-900">Edit Visit Record</h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+      </div>
+      <form id="editForm" class="space-y-3">
+        <input type="hidden" id="editId">
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Agent Name / Email</label>
+          <input type="text" id="editAgentName" required class="w-full mt-1 p-2 border rounded text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">CFID</label>
+            <input type="text" id="editCfid" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Customer Name</label>
+            <input type="text" id="editCustomerName" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Client / Institution Name</label>
+            <input type="text" id="editClientName" class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Account Number</label>
+            <input type="text" id="editAccountNumber" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Outcome</label>
+            <select id="editOutcome" required class="w-full mt-1 p-2 border rounded text-sm bg-white">
+              <option value="Paid">Paid</option>
+              <option value="Promised to Pay">Promise to Pay</option>
+              <option value="Not Found">Not Found</option>
+              <option value="Refused">Refused</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Amount (KSh)</label>
+            <input type="number" id="editAmountCollected" min="0" class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Expenses Incurred (KSh)</label>
+          <input type="number" id="editExpensesIncurred" min="0" class="w-full mt-1 p-2 border rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Notes</label>
+          <textarea id="editNotes" rows="2" class="w-full mt-1 p-2 border rounded text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded text-sm font-medium">Cancel</button>
+          <button type="submit" id="saveEditBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Save Changes</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -190,7 +253,7 @@
 
     async function fetchVisits() {
       const tbody = document.getElementById('visitsTableBody');
-      tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
 
       try {
         const { data, error } = await supabaseAgent
@@ -202,14 +265,14 @@
         allVisits = data || [];
         filterData();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
       }
     }
 
     function renderTable(visits) {
       const tbody = document.getElementById('visitsTableBody');
       if (visits.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
         return;
       }
 
@@ -217,17 +280,23 @@
       visits.forEach(visit => {
         const dateStr = visit.created_at ? new Date(visit.created_at).toLocaleString() : '';
 
-        const photoHtml = visit.photo_url 
-          ? `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>` 
-          : 'None';
-
-        const gpsHtml = (visit.latitude && visit.longitude)
-          ? `<a href="https://maps.google.com/?q=${visit.latitude},${visit.longitude}" target="_blank" class="text-blue-600 underline text-xs font-medium">View Map</a>`
-          : 'No GPS';
+        // Handle multiple photos parsing
+        let photosHtml = 'None';
+        if (visit.photo_url) {
+          try {
+            const parsed = JSON.parse(visit.photo_url);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              photosHtml = parsed.map((url, idx) => `<a href="${url}" target="_blank" class="text-blue-600 underline font-medium text-xs block">Photo ${idx + 1}</a>`).join('');
+            } else {
+              photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
+            }
+          } catch {
+            photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
+          }
+        }
 
         const clientDisplay = visit.client_name ? `${visit.client_name} (${visit.account_number || ''})` : (visit.account_number || '');
 
-        // Determine outcome columns
         const isPaid = visit.outcome === 'Paid';
         const isPromise = visit.outcome === 'Promised to Pay';
         const amt = visit.amount_collected ? Number(visit.amount_collected).toLocaleString() : '0';
@@ -246,15 +315,71 @@
           <td class="p-3">${paidHtml}</td>
           <td class="p-3">${promiseHtml}</td>
           <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
-          <td class="p-3">${gpsHtml}</td>
-          <td class="p-3">${photoHtml}</td>
-          <td class="p-3 text-center">
+          <td class="p-3">${photosHtml}</td>
+          <td class="p-3 text-center space-x-1 whitespace-nowrap">
+            <button onclick="openEditModal('${visit.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded text-xs font-semibold transition">Edit</button>
             <button onclick="deleteVisit('${visit.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 px-2.5 py-1 rounded text-xs font-semibold transition">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
+
+    // Edit Modal Functions
+    window.openEditModal = function(id) {
+      const visit = allVisits.find(v => v.id === id);
+      if (!visit) return;
+
+      document.getElementById('editId').value = visit.id;
+      document.getElementById('editAgentName').value = visit.agent_name || '';
+      document.getElementById('editCfid').value = visit.cfid || '';
+      document.getElementById('editCustomerName').value = visit.customer_name || '';
+      document.getElementById('editClientName').value = visit.client_name || '';
+      document.getElementById('editAccountNumber').value = visit.account_number || '';
+      document.getElementById('editOutcome').value = visit.outcome || 'Paid';
+      document.getElementById('editAmountCollected').value = visit.amount_collected || 0;
+      document.getElementById('editExpensesIncurred').value = visit.expenses_incurred || 0;
+      document.getElementById('editNotes').value = visit.notes || '';
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    window.closeEditModal = function() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const saveBtn = document.getElementById('saveEditBtn');
+
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      const updatedData = {
+        agent_name: document.getElementById('editAgentName').value,
+        cfid: document.getElementById('editCfid').value,
+        customer_name: document.getElementById('editCustomerName').value,
+        client_name: document.getElementById('editClientName').value,
+        account_number: document.getElementById('editAccountNumber').value,
+        outcome: document.getElementById('editOutcome').value,
+        amount_collected: parseFloat(document.getElementById('editAmountCollected').value) || 0,
+        expenses_incurred: parseFloat(document.getElementById('editExpensesIncurred').value) || 0,
+        notes: document.getElementById('editNotes').value
+      };
+
+      const { error } = await supabaseAgent.from('visits').update(updatedData).eq('id', id);
+
+      if (error) {
+        alert('Failed to update record: ' + error.message);
+      } else {
+        closeEditModal();
+        fetchVisits();
+      }
+
+      saveBtn.textContent = 'Save Changes';
+      saveBtn.disabled = false;
+    });
 
     function updateSummaryCards(visits) {
       let totalCollected = 0;
