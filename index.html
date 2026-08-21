@@ -13,88 +13,111 @@
   <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
     <h1 class="text-xl font-bold">Field Visit Report</h1>
     <div class="flex items-center gap-4">
-      <span id="agentDisplay" class="text-sm bg-blue-800 px-3 py-1 rounded">Loading Agent...</span>
-      <a href="admin.html" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">Admin Dashboard</a>
+      <button onclick="switchView('form')" id="formTabBtn" class="bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition">New Report</button>
+      <button onclick="switchView('history')" id="historyTabBtn" class="bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition">My Reports</button>
+      <a href="admin.html" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-sm font-semibold transition">Admin</a>
     </div>
   </header>
 
-  <!-- FORM CONTAINER -->
+  <!-- MAIN CONTAINER -->
   <main class="max-w-2xl mx-auto p-4 sm:p-6 my-4 bg-white rounded-lg shadow-md w-full flex-grow">
-    <form id="visitForm" class="space-y-4">
-      
-      <!-- CFID & Customer Name -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    
+    <!-- VISIT REPORT FORM VIEW -->
+    <div id="formView">
+      <form id="visitForm" class="space-y-4">
+        
+        <!-- Agent Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">CFID</label>
-          <input type="text" id="cfid" required placeholder="Enter CFID" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-gray-700">Agent Name</label>
+          <input type="text" id="agentName" required placeholder="Enter your full name" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
         </div>
+
+        <!-- CFID & Customer Name -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">CFID</label>
+            <input type="text" id="cfid" required placeholder="Enter CFID" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Customer Name</label>
+            <input type="text" id="customerName" required placeholder="Enter customer name" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <!-- Client Name & Account Number -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Client / Institution Name</label>
+            <input type="text" id="clientName" placeholder="e.g., Equity Bank / Coop" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Account Number</label>
+            <input type="text" id="accountNumber" required placeholder="Enter account number" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <!-- Outcome -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Customer Name</label>
-          <input type="text" id="customerName" required placeholder="Enter customer name" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-gray-700">Visit Outcome</label>
+          <select id="outcome" required class="w-full mt-1 p-2 border rounded bg-white focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Select Outcome...</option>
+            <option value="Paid">Paid</option>
+            <option value="Promised to Pay">Promise to Pay</option>
+            <option value="Not Found">Not Found</option>
+            <option value="Refused">Refused</option>
+          </select>
         </div>
-      </div>
 
-      <!-- Client Name & Account Number -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Amount Collected / PTP Amount -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Client / Institution Name</label>
-          <input type="text" id="clientName" placeholder="e.g., Equity Bank / Coop" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-gray-700">Amount (KSh) <span class="text-xs text-gray-500">(If Paid or Promised)</span></label>
+          <input type="number" id="amountCollected" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
         </div>
+
+        <!-- Expenses Incurred -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Account Number</label>
-          <input type="text" id="accountNumber" required placeholder="Enter account number" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-gray-700">Expenses Incurred (KSh)</label>
+          <input type="number" id="expensesIncurred" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
         </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Visit Notes / Remarks</label>
+          <textarea id="notes" rows="3" placeholder="Provide details about the visit..." class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- MULTIPLE PHOTOS UPLOAD SECTION -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Take / Upload Photos <span class="text-xs text-gray-500">(Multiple allowed)</span></label>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" multiple class="w-full mt-1 p-2 border rounded text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+          <p id="fileCountText" class="text-xs text-gray-500 mt-1">No files selected.</p>
+        </div>
+
+        <!-- GPS Location Status -->
+        <div class="bg-gray-50 p-3 rounded border flex justify-between items-center text-sm">
+          <span id="gpsStatus" class="text-gray-600">Fetching GPS Location...</span>
+          <button type="button" onclick="getLocation()" class="text-blue-600 underline text-xs font-semibold">Refresh GPS</button>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold transition shadow-md">
+          Submit Report
+        </button>
+
+      </form>
+    </div>
+
+    <!-- AGENT HISTORY / VIEW REPORTS VIEW -->
+    <div id="historyView" class="hidden space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h2 class="text-lg font-bold text-gray-900">Reports Submitted by You</h2>
+        <button onclick="loadAgentHistory()" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-semibold">Refresh List</button>
       </div>
-
-      <!-- Outcome -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Visit Outcome</label>
-        <select id="outcome" required class="w-full mt-1 p-2 border rounded bg-white focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Select Outcome...</option>
-          <option value="Paid">Paid</option>
-          <option value="Promised to Pay">Promise to Pay</option>
-          <option value="Not Found">Not Found</option>
-          <option value="Refused">Refused</option>
-        </select>
+      <div id="agentHistoryList" class="space-y-3">
+        <p class="text-sm text-gray-500 text-center py-4">Enter your Agent Name and click 'My Reports' to view your submissions.</p>
       </div>
+    </div>
 
-      <!-- Amount Collected / PTP Amount -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Amount (KSh) <span class="text-xs text-gray-500">(If Paid or Promised)</span></label>
-        <input type="number" id="amountCollected" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
-      </div>
-
-      <!-- Expenses Incurred -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Expenses Incurred (KSh)</label>
-        <input type="number" id="expensesIncurred" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
-      </div>
-
-      <!-- Notes -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Visit Notes / Remarks</label>
-        <textarea id="notes" rows="3" placeholder="Provide details about the visit..." class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea>
-      </div>
-
-      <!-- MULTIPLE PHOTOS UPLOAD SECTION -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Take / Upload Photos <span class="text-xs text-gray-500">(Multiple allowed)</span></label>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" multiple class="w-full mt-1 p-2 border rounded text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-        <p id="fileCountText" class="text-xs text-gray-500 mt-1">No files selected.</p>
-      </div>
-
-      <!-- GPS Location Status -->
-      <div class="bg-gray-50 p-3 rounded border flex justify-between items-center text-sm">
-        <span id="gpsStatus" class="text-gray-600">Fetching GPS Location...</span>
-        <button type="button" onclick="getLocation()" class="text-blue-600 underline text-xs font-semibold">Refresh GPS</button>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold transition shadow-md">
-        Submit Report
-      </button>
-
-    </form>
   </main>
 
   <!-- SUPABASE JS SDK -->
@@ -106,22 +129,29 @@
 
     let currentLat = null;
     let currentLon = null;
-    let loggedInAgentName = "Unknown Agent";
 
-    // Check active session & get agent name
-    async function initSession() {
-      const { data: { session } } = await supabaseAgent.auth.getSession();
-      if (!session) {
-        // Redirect to admin login if not authenticated
-        window.location.href = 'admin.html';
-        return;
+    // Switch between Form and History views
+    function switchView(view) {
+      const formView = document.getElementById('formView');
+      const historyView = document.getElementById('historyView');
+      const formTab = document.getElementById('formTabBtn');
+      const historyTab = document.getElementById('historyTabBtn');
+
+      if (view === 'form') {
+        formView.classList.remove('hidden');
+        historyView.classList.add('hidden');
+        formTab.className = "bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition";
+        historyTab.className = "bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition";
+      } else {
+        formView.classList.add('hidden');
+        historyView.classList.remove('hidden');
+        historyTab.className = "bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition";
+        formTab.className = "bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition";
+        loadAgentHistory();
       }
-      // Use user email as agent name identifier
-      loggedInAgentName = session.user.email;
-      document.getElementById('agentDisplay').textContent = `Agent: ${loggedInAgentName}`;
     }
 
-    // Get GPS Location automatically on load
+    // Get GPS Location safely without blocking submission if it fails
     function getLocation() {
       const gpsStatus = document.getElementById('gpsStatus');
       if (navigator.geolocation) {
@@ -131,16 +161,18 @@
             currentLat = position.coords.latitude;
             currentLon = position.coords.longitude;
             gpsStatus.textContent = `GPS Captured: ${currentLat.toFixed(4)}, ${currentLon.toFixed(4)}`;
-            gpsStatus.className = "text-green-600 font-medium";
+            gpsStatus.className = "text-green-600 font-medium text-sm";
           },
           (error) => {
-            gpsStatus.textContent = 'GPS failed. Proceeding without location.';
-            gpsStatus.className = "text-red-500 font-medium";
+            currentLat = null;
+            currentLon = null;
+            gpsStatus.textContent = 'GPS unavailable. Report will submit without GPS.';
+            gpsStatus.className = "text-orange-500 font-medium text-sm";
           },
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: true, timeout: 8000 }
         );
       } else {
-        gpsStatus.textContent = 'Geolocation is not supported by this browser.';
+        gpsStatus.textContent = 'Geolocation not supported.';
       }
     }
 
@@ -166,7 +198,7 @@
           for (let i = 0; i < photoInput.files.length; i++) {
             const file = photoInput.files[i];
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36.substring(2, 7))}.${fileExt}`;
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
             
             const { error: uploadError } = await supabaseAgent.storage
               .from('visit-photos')
@@ -182,10 +214,10 @@
           }
         }
 
-        // Insert record into Supabase table (Storing URLs as an array or comma-separated string)
+        // Insert record into Supabase table
         const { error: dbError } = await supabaseAgent.from('visits').insert([
           {
-            agent_name: loggedInAgentName,
+            agent_name: document.getElementById('agentName').value.trim(),
             cfid: document.getElementById('cfid').value,
             customer_name: document.getElementById('customerName').value,
             client_name: document.getElementById('clientName').value,
@@ -196,7 +228,7 @@
             notes: document.getElementById('notes').value,
             latitude: currentLat,
             longitude: currentLon,
-            photo_url: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null // Saves multiple links as JSON array string
+            photo_url: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null
           }
         ]);
 
@@ -215,7 +247,75 @@
       }
     });
 
-    initSession();
+    // Load reports submitted by the currently typed agent name
+    async function loadAgentHistory() {
+      const agentNameInput = document.getElementById('agentName').value.trim();
+      const historyContainer = document.getElementById('agentHistoryList');
+
+      if (!agentNameInput) {
+        historyContainer.innerHTML = `<p class="text-sm text-red-500 text-center py-4">Please enter your Agent Name in the form first, then click 'My Reports'.</p>`;
+        return;
+      }
+
+      historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">Loading your reports...</p>`;
+
+      try {
+        const { data, error } = await supabaseAgent
+          .from('visits')
+          .select('*')
+          .ilike('agent_name', agentNameInput)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">No reports found for agent: <strong>${agentNameInput}</strong></p>`;
+          return;
+        }
+
+        historyContainer.innerHTML = '';
+        data.forEach(v => {
+          const dateStr = v.created_at ? new Date(v.created_at).toLocaleString() : '';
+          const amt = v.amount_collected ? Number(v.amount_collected).toLocaleString() : '0';
+          
+          let photosHtml = '';
+          if (v.photo_url) {
+            try {
+              const parsed = JSON.parse(v.photo_url);
+              if (Array.isArray(parsed)) {
+                photosHtml = parsed.map((url, i) => `<a href="${url}" target="_blank" class="text-blue-600 underline text-xs mr-2">Photo ${i+1}</a>`).join('');
+              } else {
+                photosHtml = `<a href="${v.photo_url}" target="_blank" class="text-blue-600 underline text-xs">View Photo</a>`;
+              }
+            } catch {
+              photosHtml = `<a href="${v.photo_url}" target="_blank" class="text-blue-600 underline text-xs">View Photo</a>`;
+            }
+          }
+
+          const card = document.createElement('div');
+          card.className = "p-4 border rounded bg-gray-50 space-y-2 text-sm";
+          card.innerHTML = `
+            <div class="flex justify-between items-center text-xs text-gray-500">
+              <span>${dateStr}</span>
+              <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">${v.outcome}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 font-medium">
+              <div>Customer: <span class="text-gray-800">${v.customer_name || '-'}</span></div>
+              <div>Account: <span class="text-gray-800">${v.account_number || '-'}</span></div>
+            </div>
+            <div class="text-xs text-gray-600">Amount: KSh ${amt} | Expenses: KSh ${v.expenses_incurred || 0}</div>
+            ${v.notes ? `<div class="text-xs text-gray-500 italic">Notes: "${v.notes}"</div>` : ''}
+            <div>${photosHtml ? 'Attachments: ' + photosHtml : ''}</div>
+          `;
+          historyContainer.appendChild(card);
+        });
+
+      } catch (err) {
+        historyContainer.innerHTML = `<p class="text-sm text-red-600 text-center py-4">Failed to load history: ${err.message}</p>`;
+      }
+    }
+
+    // Initialize GPS on load
     getLocation();
   </script>
 </body>
