@@ -84,7 +84,7 @@
           
           <select id="outcomeFilter" class="p-2 border rounded text-sm bg-white focus:ring-blue-500 focus:border-blue-500 w-full">
             <option value="">All Outcomes</option>
-            <option value="Promised to Pay">Promised to Pay</option>
+            <option value="Promised to Pay">Promise to Pay</option>
             <option value="Paid">Paid</option>
             <option value="Not Found">Not Found</option>
             <option value="Refused">Refused</option>
@@ -110,8 +110,8 @@
                 <th class="p-3">CFID</th>
                 <th class="p-3">Customer</th>
                 <th class="p-3">Client / Account</th>
-                <th class="p-3">Outcome</th>
-                <th class="p-3">Amount</th>
+                <th class="p-3 text-green-700">Paid</th>
+                <th class="p-3 text-blue-700">Promise to Pay</th>
                 <th class="p-3">Expenses</th>
                 <th class="p-3">Location</th>
                 <th class="p-3">Photo</th>
@@ -223,6 +223,14 @@
 
         const clientDisplay = visit.client_name ? `${visit.client_name} (${visit.account_number || ''})` : (visit.account_number || '');
 
+        // Determine outcome columns
+        const isPaid = visit.outcome === 'Paid';
+        const isPromise = visit.outcome === 'Promised to Pay';
+        const amt = visit.amount_collected ? Number(visit.amount_collected).toLocaleString() : '0';
+
+        const paidHtml = isPaid ? `<span class="font-semibold text-green-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
+        const promiseHtml = isPromise ? `<span class="font-semibold text-blue-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
+
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = `
@@ -231,8 +239,8 @@
           <td class="p-3 font-medium text-gray-900">${visit.cfid || '-'}</td>
           <td class="p-3 text-gray-700">${visit.customer_name || '-'}</td>
           <td class="p-3 text-sm font-semibold text-gray-800">${clientDisplay}</td>
-          <td class="p-3"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">${visit.outcome || ''}</span></td>
-          <td class="p-3 font-semibold text-green-700">${visit.amount_collected ? 'KSh ' + Number(visit.amount_collected).toLocaleString() : '0'}</td>
+          <td class="p-3">${paidHtml}</td>
+          <td class="p-3">${promiseHtml}</td>
           <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
           <td class="p-3">${gpsHtml}</td>
           <td class="p-3">${photoHtml}</td>
