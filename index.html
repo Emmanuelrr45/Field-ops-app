@@ -1,32 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <link rel="manifest" href="manifest.json">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Ops - Portal Selection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Ops - Visit Report Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-100 min-h-screen text-gray-800 flex flex-col">
 
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6 text-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Field Operations System</h1>
-            <p class="text-sm text-gray-500 mt-1">Select your portal to continue</p>
-        </div>
-
-        <div class="space-y-4">
-            <a href="report.html" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
-                📝 Submit Field Visit Report
-            </a>
-            <a href="agent-dashboard.html" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
-                📊 Agent Portal (View Performance & Excel)
-            </a>
-            <a href="admin.html" class="block w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
-                🔒 Admin Dashboard
-            </a>
-        </div>
+  <!-- HEADER -->
+  <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
+    <h1 class="text-xl font-bold">Field Visit Report</h1>
+    <div class="flex items-center gap-4">
+      <span id="agentDisplay" class="text-sm bg-blue-800 px-3 py-1 rounded">Loading Agent...</span>
+      <a href="admin.html" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">Admin Dashboard</a>
     </div>
+  </header>
 
+  <!-- FORM CONTAINER -->
+  <main class="max-w-2xl mx-auto p-4 sm:p-6 my-4 bg-white rounded-lg shadow-md w-full flex-grow">
+    <form id="visitForm" class="space-y-4">
+      
+      <!-- CFID & Customer Name -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">CFID</label>
+          <input type="text" id="cfid" required placeholder="Enter CFID" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Customer Name</label>
+          <input type="text" id="customerName" required placeholder="Enter customer name" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+
+      <!-- Client Name & Account Number -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Client / Institution Name</label>
+          <input type="text" id="clientName" placeholder="e.g., Equity Bank / Coop" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Account Number</label>
+          <input type="text" id="accountNumber" required placeholder="Enter account number" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+
+      <!-- Outcome -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Visit Outcome</label>
+        <select id="outcome" required class="w-full mt-1 p-2 border rounded bg-white focus:ring-blue-500 focus:border-blue-500">
+          <option value="">Select Outcome...</option>
+          <option value="Paid">Paid</option>
+          <option value="Promised to Pay">Promise to Pay</option>
+          <option value="Not Found">Not Found</option>
+          <option value="Refused">Refused</option>
+        </select>
+      </div>
+
+      <!-- Amount Collected / PTP Amount -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Amount (KSh) <span class="text-xs text-gray-500">(If Paid or Promised)</span></label>
+        <input type="number" id="amountCollected" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Expenses Incurred -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Expenses Incurred (KSh)</label>
+        <input type="number" id="expensesIncurred" value="0" min="0" class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Visit Notes / Remarks</label>
+        <textarea id="notes" rows="3" placeholder="Provide details about the visit..." class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea>
+      </div>
+
+      <!-- MULTIPLE PHOTOS UPLOAD SECTION -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Take / Upload Photos <span class="text-xs text-gray-500">(Multiple allowed)</span></label>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" multiple class="w-full mt-1 p-2 border rounded text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+        <p id="fileCountText" class="text-xs text-gray-500 mt-1">No files selected.</p>
+      </div>
+
+      <!-- GPS Location Status -->
+      <div class="bg-gray-50 p-3 rounded border flex justify-between items-center text-sm">
+        <span id="gpsStatus" class="text-gray-600">Fetching GPS Location...</span>
+        <button type="button" onclick="getLocation()" class="text-blue-600 underline text-xs font-semibold">Refresh GPS</button>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold transition shadow-md">
+        Submit Report
+      </button>
+
+    </form>
+  </main>
+
+  <!-- SUPABASE JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bwzrklomhkoxbmpimpwc.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
+    const supabaseAgent = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentLat = null;
+    let currentLon = null;
+    let loggedInAgentName = "Unknown Agent";
+
+    // Check active session & get agent name
+    async function initSession() {
+      const { data: { session } } = await supabaseAgent.auth.getSession();
+      if (!session) {
+        // Redirect to admin login if not authenticated
+        window.location.href = 'admin.html';
+        return;
+      }
+      // Use user email as agent name identifier
+      loggedInAgentName = session.user.email;
+      document.getElementById('agentDisplay').textContent = `Agent: ${loggedInAgentName}`;
+    }
+
+    // Get GPS Location automatically on load
+    function getLocation() {
+      const gpsStatus = document.getElementById('gpsStatus');
+      if (navigator.geolocation) {
+        gpsStatus.textContent = 'Locating coordinates...';
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            currentLat = position.coords.latitude;
+            currentLon = position.coords.longitude;
+            gpsStatus.textContent = `GPS Captured: ${currentLat.toFixed(4)}, ${currentLon.toFixed(4)}`;
+            gpsStatus.className = "text-green-600 font-medium";
+          },
+          (error) => {
+            gpsStatus.textContent = 'GPS failed. Proceeding without location.';
+            gpsStatus.className = "text-red-500 font-medium";
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else {
+        gpsStatus.textContent = 'Geolocation is not supported by this browser.';
+      }
+    }
+
+    // Update file count text when user selects files
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      const count = e.target.files.length;
+      document.getElementById('fileCountText').textContent = count > 0 ? `${count} photo(s) selected.` : 'No files selected.';
+    });
+
+    // Form Submission Handler
+    document.getElementById('visitForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.textContent = 'Submitting report & uploading photos...';
+      submitBtn.disabled = true;
+
+      try {
+        const photoInput = document.getElementById('photoInput');
+        let photoUrls = [];
+
+        // Loop through and upload multiple files if provided
+        if (photoInput.files.length > 0) {
+          for (let i = 0; i < photoInput.files.length; i++) {
+            const file = photoInput.files[i];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36.substring(2, 7))}.${fileExt}`;
+            
+            const { error: uploadError } = await supabaseAgent.storage
+              .from('visit-photos')
+              .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabaseAgent.storage
+              .from('visit-photos')
+              .getPublicUrl(fileName);
+
+            photoUrls.push(publicUrlData.publicUrl);
+          }
+        }
+
+        // Insert record into Supabase table (Storing URLs as an array or comma-separated string)
+        const { error: dbError } = await supabaseAgent.from('visits').insert([
+          {
+            agent_name: loggedInAgentName,
+            cfid: document.getElementById('cfid').value,
+            customer_name: document.getElementById('customerName').value,
+            client_name: document.getElementById('clientName').value,
+            account_number: document.getElementById('accountNumber').value,
+            outcome: document.getElementById('outcome').value,
+            amount_collected: parseFloat(document.getElementById('amountCollected').value) || 0,
+            expenses_incurred: parseFloat(document.getElementById('expensesIncurred').value) || 0,
+            notes: document.getElementById('notes').value,
+            latitude: currentLat,
+            longitude: currentLon,
+            photo_url: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null // Saves multiple links as JSON array string
+          }
+        ]);
+
+        if (dbError) throw dbError;
+
+        alert('Field report submitted successfully!');
+        document.getElementById('visitForm').reset();
+        document.getElementById('fileCountText').textContent = 'No files selected.';
+        getLocation();
+
+      } catch (err) {
+        alert('Error submitting report: ' + err.message);
+      } finally {
+        submitBtn.textContent = 'Submit Report';
+        submitBtn.disabled = false;
+      }
+    });
+
+    initSession();
+    getLocation();
+  </script>
 </body>
 </html>
