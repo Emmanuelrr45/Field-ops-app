@@ -278,6 +278,10 @@
           const dateStr = v.created_at ? new Date(v.created_at).toLocaleString() : '';
           const amt = v.amount_collected ? Number(v.amount_collected).toLocaleString() : '0';
           
+          // Mask the account number to show only the last 4 digits for security
+          const rawAcc = v.account_number ? String(v.account_number) : '';
+          const maskedAcc = rawAcc.length > 4 ? '•••• ' + rawAcc.slice(-4) : (rawAcc || '-');
+
           let photosHtml = '';
           if (v.photo_url) {
             try {
@@ -301,7 +305,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2 font-medium">
               <div>Customer: <span class="text-gray-800">${v.customer_name || '-'}</span></div>
-              <div>Account: <span class="text-gray-800">${v.account_number || '-'}</span></div>
+              <div>Account: <span class="text-gray-800 font-mono">${maskedAcc}</span></div>
             </div>
             <div class="text-xs text-gray-600">Amount: KSh ${amt} | Expenses: KSh ${v.expenses_incurred || 0}</div>
             ${v.notes ? `<div class="text-xs text-gray-500 italic">Notes: "${v.notes}"</div>` : ''}
