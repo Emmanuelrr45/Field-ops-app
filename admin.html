@@ -10,6 +10,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
+  <!-- LOGIN CONTAINER -->
   <div id="loginContainer" class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
       <div class="text-center">
@@ -35,6 +36,7 @@
     </div>
   </div>
 
+  <!-- DASHBOARD CONTAINER -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
     <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
       <h1 class="text-xl font-bold">Admin Analytics & Reports</h1>
@@ -46,6 +48,7 @@
 
     <main class="max-w-7xl mx-auto p-4 space-y-6 mt-4 flex-grow w-full">
       
+      <!-- Summary Totals Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-500 flex flex-col justify-between">
           <p class="text-sm text-gray-500 font-medium">Total Collected (Paid)</p>
@@ -65,6 +68,7 @@
         </div>
       </div>
 
+      <!-- Analytics Chart Section -->
       <div class="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         <div class="md:col-span-1 space-y-2">
           <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
@@ -77,6 +81,7 @@
         </div>
       </div>
 
+      <!-- Main Data Table Container with Filters -->
       <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
           <input type="text" id="searchInput" placeholder="Search account, client, or agent..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
@@ -112,13 +117,14 @@
                 <th class="p-3 text-green-700">Paid</th>
                 <th class="p-3 text-blue-700">Promise to Pay</th>
                 <th class="p-3">Expenses</th>
+                <th class="p-3">Notes</th>
                 <th class="p-3">Photos</th>
                 <th class="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="visitsTableBody" class="divide-y divide-gray-200 text-sm">
               <tr>
-                <td colspan="10" class="p-4 text-center text-gray-500">Loading records...</td>
+                <td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td>
               </tr>
             </tbody>
           </table>
@@ -128,6 +134,7 @@
     </main>
   </div>
 
+  <!-- EDIT MODAL -->
   <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
@@ -247,7 +254,7 @@
 
     async function fetchVisits() {
       const tbody = document.getElementById('visitsTableBody');
-      tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
 
       try {
         const { data, error } = await supabaseAgent
@@ -259,14 +266,14 @@
         allVisits = data || [];
         filterData();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
       }
     }
 
     function renderTable(visits) {
       const tbody = document.getElementById('visitsTableBody');
       if (visits.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
         return;
       }
 
@@ -301,6 +308,7 @@
 
         const paidHtml = isPaid ? `<span class="font-semibold text-green-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
         const promiseHtml = isPromise ? `<span class="font-semibold text-blue-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
+        const notesDisplay = visit.notes ? `<span class="text-gray-600 text-xs italic max-w-xs block truncate" title="${visit.notes.replace(/"/g, '&quot;')}">${visit.notes}</span>` : `<span class="text-gray-400">-</span>`;
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-50 transition';
@@ -313,6 +321,7 @@
           <td class="p-3">${paidHtml}</td>
           <td class="p-3">${promiseHtml}</td>
           <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
+          <td class="p-3">${notesDisplay}</td>
           <td class="p-3">${photosHtml}</td>
           <td class="p-3 text-center space-x-1 whitespace-nowrap">
             <button onclick="openEditModal('${visit.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded text-xs font-semibold transition">Edit</button>
@@ -451,7 +460,8 @@
                             (v.client_name && v.client_name.toLowerCase().includes(searchTerm)) ||
                             (v.agent_name && v.agent_name.toLowerCase().includes(searchTerm)) ||
                             (v.cfid && v.cfid.toLowerCase().includes(searchTerm)) ||
-                            (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm));
+                            (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm)) ||
+                            (v.notes && v.notes.toLowerCase().includes(searchTerm));
         const matchesOutcome = outcomeVal === '' || v.outcome === outcomeVal;
 
         let matchesDate = true;
