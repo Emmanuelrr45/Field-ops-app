@@ -10,7 +10,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
-  <!-- LOGIN CONTAINER -->
   <div id="loginContainer" class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
       <div class="text-center">
@@ -36,7 +35,6 @@
     </div>
   </div>
 
-  <!-- DASHBOARD CONTAINER -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
     <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
       <h1 class="text-xl font-bold">Admin Analytics & Reports</h1>
@@ -48,7 +46,6 @@
 
     <main class="max-w-7xl mx-auto p-4 space-y-6 mt-4 flex-grow w-full">
       
-      <!-- Summary Totals Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-500 flex flex-col justify-between">
           <p class="text-sm text-gray-500 font-medium">Total Collected (Paid)</p>
@@ -68,7 +65,6 @@
         </div>
       </div>
 
-      <!-- Analytics Chart Section -->
       <div class="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         <div class="md:col-span-1 space-y-2">
           <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
@@ -81,7 +77,6 @@
         </div>
       </div>
 
-      <!-- Main Data Table Container with Filters -->
       <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
           <input type="text" id="searchInput" placeholder="Search account, client, or agent..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
@@ -133,7 +128,6 @@
     </main>
   </div>
 
-  <!-- EDIT MODAL -->
   <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
@@ -295,7 +289,11 @@
           }
         }
 
-        const clientDisplay = visit.client_name ? `${visit.client_name} (${visit.account_number || ''})` : (visit.account_number || '');
+        // Mask account number to show only last 4 digits securely
+        const rawAcc = visit.account_number ? String(visit.account_number) : '';
+        const maskedAcc = rawAcc.length > 4 ? '•••• ' + rawAcc.slice(-4) : (rawAcc || '-');
+
+        const clientDisplay = visit.client_name ? `${visit.client_name} (${maskedAcc})` : maskedAcc;
 
         const isPaid = visit.outcome === 'Paid';
         const isPromise = visit.outcome === 'Promised to Pay';
@@ -311,7 +309,7 @@
           <td class="p-3 font-medium">${visit.agent_name || ''}</td>
           <td class="p-3 font-medium text-gray-900">${visit.cfid || '-'}</td>
           <td class="p-3 text-gray-700">${visit.customer_name || '-'}</td>
-          <td class="p-3 text-sm font-semibold text-gray-800">${clientDisplay}</td>
+          <td class="p-3 text-sm font-semibold text-gray-800 font-mono">${clientDisplay}</td>
           <td class="p-3">${paidHtml}</td>
           <td class="p-3">${promiseHtml}</td>
           <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
@@ -450,10 +448,10 @@
 
       const filtered = allVisits.filter(v => {
         const matchesSearch = (v.account_number && v.account_number.toLowerCase().includes(searchTerm)) ||
-                              (v.client_name && v.client_name.toLowerCase().includes(searchTerm)) ||
-                              (v.agent_name && v.agent_name.toLowerCase().includes(searchTerm)) ||
-                              (v.cfid && v.cfid.toLowerCase().includes(searchTerm)) ||
-                              (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm));
+                            (v.client_name && v.client_name.toLowerCase().includes(searchTerm)) ||
+                            (v.agent_name && v.agent_name.toLowerCase().includes(searchTerm)) ||
+                            (v.cfid && v.cfid.toLowerCase().includes(searchTerm)) ||
+                            (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm));
         const matchesOutcome = outcomeVal === '' || v.outcome === outcomeVal;
 
         let matchesDate = true;
@@ -489,8 +487,8 @@
 
       const dataToExport = allVisits.filter(v => {
         const matchesSearch = (v.account_number && v.account_number.toLowerCase().includes(searchTerm)) ||
-                              (v.client_name && v.client_name.toLowerCase().includes(searchTerm)) ||
-                              (v.agent_name && v.agent_name.toLowerCase().includes(searchTerm));
+                            (v.client_name && v.client_name.toLowerCase().includes(searchTerm)) ||
+                            (v.agent_name && v.agent_name.toLowerCase().includes(searchTerm));
         const matchesOutcome = outcomeVal === '' || v.outcome === outcomeVal;
         let matchesDate = true;
         if (v.created_at) {
