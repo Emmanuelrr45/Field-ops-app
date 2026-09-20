@@ -88,8 +88,9 @@
           
           <select id="outcomeFilter" class="p-2 border rounded text-sm bg-white focus:ring-blue-500 focus:border-blue-500 w-full">
             <option value="">All Outcomes</option>
-            <option value="Promised to Pay">Promise to Pay</option>
             <option value="Paid">Paid</option>
+            <option value="Promised to Pay">Promise to Pay</option>
+            <option value="Negotiation">Negotiation</option>
             <option value="Not Found">Not Found</option>
             <option value="Refused">Refused</option>
           </select>
@@ -173,6 +174,7 @@
             <select id="editOutcome" required class="w-full mt-1 p-2 border rounded text-sm bg-white">
               <option value="Paid">Paid</option>
               <option value="Promised to Pay">Promise to Pay</option>
+              <option value="Negotiation">Negotiation</option>
               <option value="Not Found">Not Found</option>
               <option value="Refused">Refused</option>
             </select>
@@ -413,6 +415,7 @@
       const counts = {
         'Promised to Pay': 0,
         'Paid': 0,
+        'Negotiation': 0,
         'Not Found': 0,
         'Refused': 0
       };
@@ -432,7 +435,7 @@
           labels: Object.keys(counts),
           datasets: [{
             data: Object.values(counts),
-            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+            backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'],
             borderWidth: 1
           }]
         },
