@@ -111,18 +111,18 @@
     <!-- AGENT HISTORY / VIEW REPORTS VIEW -->
     <div id="historyView" class="hidden space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
-        <h2 class="text-lg font-bold text-gray-900">Reports Submitted by You</h2>
+        <h2 class="text-lg font-bold text-gray-900">Submitted Reports History</h2>
         <button onclick="loadAgentHistory()" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-semibold">Refresh List</button>
       </div>
 
       <!-- Agent Search Input & Button -->
       <div class="flex gap-2">
-        <input type="text" id="agentSearchInput" placeholder="Search account, customer, or CFID..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
+        <input type="text" id="agentSearchInput" placeholder="Search account, customer, agent, or CFID..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
         <button onclick="loadAgentHistory()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold transition whitespace-nowrap">Search</button>
       </div>
 
       <div id="agentHistoryList" class="space-y-3">
-        <p class="text-sm text-gray-500 text-center py-4">Enter your Agent Name and click 'My Reports' to view your submissions.</p>
+        <p class="text-sm text-gray-500 text-center py-4">Click 'My Reports' to view and search recent submissions.</p>
       </div>
     </div>
 
@@ -201,7 +201,6 @@
         const photoInput = document.getElementById('photoInput');
         let photoUrls = [];
 
-        // Loop through and upload multiple files if provided
         if (photoInput.files.length > 0) {
           for (let i = 0; i < photoInput.files.length; i++) {
             const file = photoInput.files[i];
@@ -222,7 +221,6 @@
           }
         }
 
-        // Insert record into Supabase table
         const { error: dbError } = await supabaseAgent.from('visits').insert([
           {
             agent_name: document.getElementById('agentName').value.trim(),
@@ -255,45 +253,39 @@
       }
     });
 
-    // Load reports submitted by the currently typed agent name with search filtering
+    // Load recent reports and filter dynamically using search button/input
     async function loadAgentHistory() {
-      const agentNameInput = document.getElementById('agentName').value.trim();
       const searchQuery = document.getElementById('agentSearchInput').value.toLowerCase().trim();
       const historyContainer = document.getElementById('agentHistoryList');
 
-      if (!agentNameInput) {
-        historyContainer.innerHTML = `<p class="text-sm text-red-500 text-center py-4">Please enter your Agent Name in the form first, then click 'My Reports'.</p>`;
-        return;
-      }
-
-      historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">Loading your reports...</p>`;
+      historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">Searching records...</p>`;
 
       try {
         const { data, error } = await supabaseAgent
           .from('visits')
           .select('*')
-          .ilike('agent_name', agentNameInput)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(50);
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-          historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">No reports found for agent: <strong>${agentNameInput}</strong></p>`;
+          historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">No visit records found in the database.</p>`;
           return;
         }
 
-        // Apply local search query filter if user typed something in the search bar
         const filteredData = data.filter(v => {
           if (!searchQuery) return true;
           return String(v.account_number || '').toLowerCase().includes(searchQuery) ||
                  String(v.customer_name || '').toLowerCase().includes(searchQuery) ||
                  String(v.cfid || '').toLowerCase().includes(searchQuery) ||
                  String(v.client_name || '').toLowerCase().includes(searchQuery) ||
+                 String(v.agent_name || '').toLowerCase().includes(searchQuery) ||
                  String(v.outcome || '').toLowerCase().includes(searchQuery);
         });
 
         if (filteredData.length === 0) {
-          historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">No matching reports found for search query: <strong>${searchQuery}</strong></p>`;
+          historyContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">No matching reports found for: <strong>${searchQuery}</strong></p>`;
           return;
         }
 
@@ -323,7 +315,7 @@
           card.className = "p-4 border rounded bg-gray-50 space-y-2 text-sm";
           card.innerHTML = `
             <div class="flex justify-between items-center text-xs text-gray-500">
-              <span>${dateStr}</span>
+              <span>${dateStr} (Agent: <strong>${v.agent_name || 'Unknown'}</strong>)</span>
               <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">${v.outcome}</span>
             </div>
             <div class="grid grid-cols-2 gap-2 font-medium">
@@ -342,7 +334,6 @@
       }
     }
 
-    // Initialize GPS on load
     getLocation();
   </script>
 </body>
