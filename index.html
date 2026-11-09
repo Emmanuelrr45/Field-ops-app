@@ -1,34 +1,158 @@
-// Add this function inside your index.html script to check agent activity
-async function checkAgentMonthlyActivity(agentName) {
-  if (!agentName) return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Operations Reporting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 flex flex-col justify-between">
 
-  const currentMonthKey = new Date().toISOString().slice(0, 7); // e.g., "2026-11"
+  <div>
+    <!-- Navigation Bar -->
+    <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
+      <h1 class="text-xl font-bold">Field Ops Entry</h1>
+      <div class="flex items-center gap-3">
+        <button id="toggleViewBtn" onclick="toggleView()" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">
+          View History
+        </button>
+        <a href="admin.html" class="bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-semibold transition">
+          Admin Login
+        </a>
+      </div>
+    </header>
 
-  try {
-    const { data, error } = await supabaseAgent
-      .from('visits')
-      .select('created_at')
-      .ilike('agent_name', agentName.trim());
-
-    if (error) throw error;
-
-    // Filter visits made in the current month by this agent
-    const currentMonthVisits = (data || []).filter(v => v.created_at && v.created_at.slice(0, 7) === currentMonthKey);
-
-    const warningContainer = document.getElementById('agentActivityWarning');
-    if (!warningContainer) return;
-
-    if (currentMonthVisits.length === 0) {
-      warningContainer.innerHTML = `
-        <div class="bg-orange-50 border-l-4 border-orange-500 p-3 rounded text-xs text-orange-800 flex justify-between items-center">
-          <span>⚠️ <strong>Reminder:</strong> You have not logged any field visits for this month yet. Time to head out for field operations and follow-ups!</span>
+    <!-- Monthly Field Action Required Banner -->
+    <div id="fieldReminderBanner" class="hidden max-w-md mx-auto mt-4 px-4">
+      <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex items-start gap-3">
+        <div class="text-amber-600 text-xl font-bold">⚠️</div>
+        <div>
+          <h4 class="font-bold text-amber-900 text-sm">Action Required</h4>
+          <p class="text-xs text-amber-800 mt-0.5">
+            Please make sure you look for field accounts and go for field. You have not logged any visits for this month yet!
+          </p>
         </div>
-      `;
-      warningContainer.classList.remove('hidden');
-    } else {
-      warningContainer.classList.add('hidden');
-    }
-  } catch (err) {
-    console.error('Error checking agent activity:', err);
-  }
-}
+      </div>
+    </div>
+
+    <!-- FORM CONTAINER -->
+    <main id="formView" class="max-w-md mx-auto p-4 space-y-4">
+      <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <h2 class="text-lg font-bold text-gray-900 border-b pb-2">Log Field Visit</h2>
+        
+        <form id="visitForm" class="space-y-4" onsubmit="submitForm(event)">
+          
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase">Agent Name</label>
+            <input type="text" id="agentName" required placeholder="e.g., Dismas" onblur="checkAgentFieldActivity(this.value)" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">CFID</label>
+              <input type="text" id="cfid" required placeholder="Customer ID" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">Customer Name</label>
+              <input type="text" id="customerName" required placeholder="Full Name" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">Client / Institution</label>
+              <input type="text" id="clientName" placeholder="Client Name" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">Account Number</label>
+              <input type="text" id="accountNumber" required placeholder="Acc No" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">Outcome</label>
+              <select id="outcome" required class="w-full mt-1 p-2.5 border rounded text-sm bg-white focus:ring-blue-500 focus:border-blue-500">
+                <option value="Paid">Paid</option>
+                <option value="Promised to Pay">Promised to Pay</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Not Found">Not Found</option>
+                <option value="Refused">Refused</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase">Amount (KSh)</label>
+              <input type="number" id="amountCollected" min="0" placeholder="0" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase">Expenses Incurred (KSh)</label>
+            <input type="number" id="expensesIncurred" min="0" placeholder="0" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase">Field Notes</label>
+            <textarea id="notes" rows="2" placeholder="Details of field visit..." class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Attach Photos</label>
+            <input type="file" id="photoFiles" accept="image/*" multiple class="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm shadow transition">
+              Submit Field Report
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </main>
+
+    <!-- HISTORY / MY VISITS VIEW -->
+    <main id="historyView" class="hidden max-w-2xl mx-auto p-4 space-y-4">
+      <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 class="text-lg font-bold text-gray-900">Recent Field Records</h2>
+          <button onclick="loadMyVisits()" class="text-blue-600 hover:underline text-xs font-semibold">Refresh</button>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="agentFilterInput" placeholder="Filter by Agent Name..." oninput="filterAgentVisits()" class="w-full p-2 border rounded text-xs">
+          <input type="text" id="searchKeyword" placeholder="Search account/customer..." oninput="filterAgentVisits()" class="w-full p-2 border rounded text-xs">
+        </div>
+
+        <div id="agentVisitsList" class="space-y-3">
+          <p class="text-xs text-gray-500 text-center py-4">Enter agent name above to view records.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="text-center py-4 text-xs text-gray-400 border-t mt-6">
+    Field Operations System • Powered by Supabase
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bwzrklomhkoxbmpimpwc.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
+    const supabaseAgent = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let myVisitsData = [];
+
+    // Check if the agent has logged visits in the current month
+    async function checkAgentFieldActivity(agentName) {
+      const banner = document.getElementById('fieldReminderBanner');
+      if (!banner) return;
+      if (!agentName || !agentName.trim()) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const currentMonthKey = new Date().toISOString().slice(0, 7); // e.g., "2026-11"
+
+      try
