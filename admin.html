@@ -105,16 +105,27 @@
         </div>
       </div>
 
-      <!-- LEADERBOARD & RECORDS TABLE -->
+      <!-- LEADERBOARD & RECORDS TABLE WITH MONTHLY FILTER -->
       <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
-        <div class="flex justify-between items-center border-b pb-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 gap-3">
           <div>
             <h2 class="text-lg font-bold text-gray-800">🏆 Agent Leaderboard</h2>
             <p class="text-xs text-gray-500">Ranked by collections performance.</p>
           </div>
-          <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow">
-            📥 Export CSV
-          </button>
+          
+          <div class="flex items-center gap-2">
+            <!-- MONTHLY FILTER -->
+            <select id="monthFilter" onchange="renderLeaderboard()" class="p-1.5 border rounded text-xs bg-gray-50 font-semibold">
+              <option value="all">All-Time Progressive</option>
+              <option value="2026-11" selected>November 2026</option>
+              <option value="2026-10">October 2026</option>
+              <option value="2026-09">September 2026</option>
+            </select>
+
+            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow">
+              📥 Export CSV
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -169,7 +180,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://bwzrklomhkoxbmpimpwc.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
     const supabaseAgent = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const ADMIN_PASSCODE = "1234"; 
@@ -263,9 +274,19 @@
       });
     }
 
+    // Leaderboard filtered by selected month
     function renderLeaderboard() {
+      const selectedMonth = document.getElementById('monthFilter').value;
       const stats = {};
+
       allVisits.forEach(v => {
+        if (!v.created_at) return;
+        const visitMonth = v.created_at.slice(0, 7); // e.g. "2026-11"
+
+        if (selectedMonth !== 'all' && visitMonth !== selectedMonth) {
+          return; // Skip if it doesn't match selected month
+        }
+
         const name = (v.agent_name || 'Unassigned').trim();
         if (!stats[name]) stats[name] = { visits: 0, collected: 0, expenses: 0 };
         stats[name].visits++;
@@ -277,7 +298,7 @@
       const tbody = document.getElementById('leaderboardBody');
       
       if (sorted.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No agent reports logged yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No agent reports logged for this period.</td></tr>';
         return;
       }
 
