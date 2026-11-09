@@ -4,94 +4,78 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Field Ops - Admin Dashboard & Analytics</title>
+  <title>Admin Dashboard - Field Ops</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen text-gray-800 flex flex-col justify-between">
 
-  <!-- LOGIN CONTAINER -->
-  <div id="loginContainer" class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
-      <div class="text-center">
-        <h1 class="text-2xl font-bold text-gray-900">Admin Login</h1>
-        <p class="text-sm text-gray-500 mt-1">Enter your credentials to access analytics & reports</p>
-      </div>
-      <div id="loginForm" class="space-y-4">
+  <!-- AUTH / LOGIN OVERLAY -->
+  <div id="authOverlay" class="fixed inset-0 bg-blue-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full space-y-4">
+      <h2 class="text-xl font-bold text-gray-900 text-center border-b pb-2">Admin Portal Access</h2>
+      <p class="text-xs text-gray-500 text-center">Please enter administrative passcode to continue.</p>
+      
+      <form onsubmit="verifyAdminPasscode(event)" class="space-y-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700">Email Address</label>
-          <input type="email" id="email" required class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-xs font-semibold text-gray-700 uppercase">Passcode</label>
+          <input type="password" id="passcodeInput" required placeholder="Enter passcode" class="w-full mt-1 p-2.5 border rounded text-sm focus:ring-blue-500 focus:border-blue-500">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id="password" required class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-semibold transition">
-          Sign In
+        <p id="authError" class="text-xs text-red-600 hidden">Incorrect passcode. Try again.</p>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded font-bold text-sm shadow">
+          Unlock Dashboard
         </button>
-      </div>
-      <div class="text-center">
-        <a href="index.html" class="text-sm text-blue-600 hover:underline">← Back to Field Form</a>
-      </div>
+      </form>
     </div>
   </div>
 
-  <!-- DASHBOARD CONTAINER -->
-  <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
+  <!-- DASHBOARD MAIN CONTENT -->
+  <div id="dashboardContent" class="hidden">
+    <!-- Navigation Bar -->
     <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
-      <h1 class="text-xl font-bold">Admin Analytics & Reports</h1>
-      <div class="flex items-center gap-4">
-        <a href="index.html" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">Form</a>
-        <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-semibold transition">Logout</button>
+      <div>
+        <h1 class="text-xl font-bold">Admin Analytics Dashboard</h1>
+        <p class="text-xs text-blue-200">Field Operations & Collections Tracker</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">
+          Entry Form
+        </a>
+        <button onclick="lockAdmin()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-semibold transition">
+          Lock Portal
+        </button>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 space-y-6 mt-4 flex-grow w-full">
-      
-      <!-- Summary Totals Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-500 flex flex-col justify-between">
-          <p class="text-sm text-gray-500 font-medium">Selected Month (Paid)</p>
-          <h2 id="totalCollections" class="text-2xl font-bold text-green-700 mt-2">KSh 0</h2>
+    <main class="max-w-6xl mx-auto p-4 space-y-6">
+
+      <!-- KPI METRICS CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Total Field Visits</p>
+          <h3 id="statTotalVisits" class="text-2xl font-extrabold text-gray-900 mt-1">0</h3>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500 flex flex-col justify-between">
-          <p class="text-sm text-gray-500 font-medium">Selected Month (PTP)</p>
-          <h2 id="totalPtp" class="text-2xl font-bold text-blue-700 mt-2">KSh 0</h2>
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-600">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Total Collected (KSh)</p>
+          <h3 id="statTotalCollected" class="text-2xl font-extrabold text-green-600 mt-1">0</h3>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-orange-500 flex flex-col justify-between">
-          <p class="text-sm text-gray-500 font-medium">Selected Month Expenses</p>
-          <h2 id="totalExpenses" class="text-2xl font-bold text-orange-600 mt-2">KSh 0</h2>
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-indigo-600">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Promised to Pay (PTP)</p>
+          <h3 id="statTotalPTP" class="text-2xl font-extrabold text-indigo-600 mt-1">0</h3>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-purple-500 flex flex-col justify-between">
-          <p class="text-sm text-gray-500 font-medium">Visits Logged (Selected)</p>
-          <h2 id="totalVisitsCount" class="text-2xl font-bold text-purple-800 mt-2">0</h2>
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Field Expenses (KSh)</p>
+          <h3 id="statTotalExpenses" class="text-2xl font-extrabold text-red-500 mt-1">0</h3>
         </div>
       </div>
 
-      <!-- Analytics Chart, Leaderboard & Agent Dispatch Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Visit Outcomes Chart -->
+      <!-- CHARTS & AGENT DIRECTORY -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Outcomes Doughnut Chart -->
         <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
-            <p class="text-sm text-gray-500">Breakdown based on active filters.</p>
-          </div>
-          <div class="flex justify-center my-4">
-            <div class="w-full max-w-xs h-48">
-              <canvas id="outcomesChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Agent Performance Leaderboard -->
-        <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-gray-800">🏆 Agent Leaderboard</h2>
-            <p class="text-sm text-gray-500 mb-3">Ranked by collections.</p>
-          </div>
-          <div id="leaderboardList" class="space-y-2 overflow-y-auto max-h-52 pr-1">
-            <p class="text-sm text-gray-500 text-center py-6">Loading leaderboard...</p>
+          <h2 class="text-lg font-bold text-gray-800 mb-2">📊 Visit Outcomes Breakdown</h2>
+          <div class="relative max-h-64 flex justify-center">
+            <canvas id="outcomeChart"></canvas>
           </div>
         </div>
 
@@ -100,67 +84,52 @@
           <div>
             <div class="flex justify-between items-center mb-1">
               <h2 class="text-lg font-bold text-gray-800">📞 Field Dispatch</h2>
-              <button onclick="openAddAgentModal()" class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">+ Add Agent</button>
+              <button onclick="openAddAgentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-semibold">+ Add Agent</button>
             </div>
             <p class="text-sm text-gray-500 mb-3">Send morning reminders or follow-ups.</p>
+            
+            <!-- BULK BROADCAST BUTTONS -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <button onclick="broadcastWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                💬 Bulk WhatsApp
+              </button>
+              <button onclick="broadcastSMS()" class="bg-gray-800 hover:bg-gray-900 text-white px-2.5 py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                ✉️ Bulk SMS
+              </button>
+            </div>
           </div>
+
           <div id="agentDirectoryList" class="space-y-2 overflow-y-auto max-h-52 pr-1">
             <p class="text-sm text-gray-500 text-center py-6">Loading agents...</p>
           </div>
         </div>
-
       </div>
 
-      <!-- Main Data Table Container with Filters -->
+      <!-- LEADERBOARD & RECORDS TABLE -->
       <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
-          <input type="text" id="searchInput" placeholder="Search account, client, or agent..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
-          
-          <select id="monthFilter" class="p-2 border rounded text-sm bg-white font-medium text-blue-900 border-blue-300 focus:ring-blue-500 focus:border-blue-500 w-full">
-            <option value="">All Months</option>
-          </select>
-
-          <select id="outcomeFilter" class="p-2 border rounded text-sm bg-white focus:ring-blue-500 focus:border-blue-500 w-full">
-            <option value="">All Outcomes</option>
-            <option value="Paid">Paid</option>
-            <option value="Promised to Pay">Promise to Pay</option>
-            <option value="Negotiation">Negotiation</option>
-            <option value="Not Found">Not Found</option>
-            <option value="Refused">Refused</option>
-          </select>
-
-          <div class="flex items-center gap-2 w-full">
-            <input type="date" id="startDate" title="Start Date" class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
-            <input type="date" id="endDate" title="End Date" class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
+        <div class="flex justify-between items-center border-b pb-3">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">🏆 Agent Leaderboard</h2>
+            <p class="text-xs text-gray-500">Ranked by collections performance.</p>
           </div>
-
-          <div class="flex items-center gap-2 justify-end w-full">
-            <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium transition w-full md:w-auto">Export CSV</button>
-            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition w-full md:w-auto">Refresh</button>
-          </div>
+          <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow">
+            📥 Export CSV
+          </button>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-gray-200 text-gray-700 text-xs uppercase tracking-wider">
-                <th class="p-3">Time</th>
-                <th class="p-3">Agent</th>
-                <th class="p-3">CFID</th>
-                <th class="p-3">Customer</th>
-                <th class="p-3">Client / Account</th>
-                <th class="p-3 text-green-700">Paid</th>
-                <th class="p-3 text-blue-700">Promise to Pay</th>
-                <th class="p-3">Expenses</th>
-                <th class="p-3">Notes</th>
-                <th class="p-3">Photos</th>
-                <th class="p-3 text-center">Actions</th>
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-100 uppercase text-gray-600 border-b">
+              <tr>
+                <th class="p-2.5">Agent Name</th>
+                <th class="p-2.5 text-center">Visits</th>
+                <th class="p-2.5 text-right">Collections</th>
+                <th class="p-2.5 text-right">Expenses</th>
+                <th class="p-2.5 text-right">Net Profit</th>
               </tr>
             </thead>
-            <tbody id="visitsTableBody" class="divide-y divide-gray-200 text-sm">
-              <tr>
-                <td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td>
-              </tr>
+            <tbody id="leaderboardBody" class="divide-y">
+              <tr><td colspan="5" class="p-4 text-center text-gray-400">Loading metrics...</td></tr>
             </tbody>
           </table>
         </div>
@@ -170,93 +139,32 @@
   </div>
 
   <!-- ADD AGENT MODAL -->
-  <div id="agentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-gray-900">Add Field Agent</h3>
-        <button onclick="closeAddAgentModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+  <div id="agentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-gray-900 text-base">Add Field Agent</h3>
+        <button onclick="closeAddAgentModal()" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
       </div>
-      <form id="agentForm" class="space-y-3" onsubmit="saveAgent(event)">
+      <form onsubmit="saveAgent(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-gray-700">Agent Name</label>
-          <input type="text" id="newAgentName" required placeholder="Full Name" class="w-full mt-1 p-2 border rounded text-sm">
+          <label class="block text-xs font-semibold text-gray-700 uppercase">Agent Name</label>
+          <input type="text" id="modalAgentName" required placeholder="e.g. Dismas" class="w-full mt-1 p-2 border rounded text-xs">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700">Phone Number (WhatsApp)</label>
-          <input type="text" id="newAgentPhone" required placeholder="+2547XXXXXXXX" class="w-full mt-1 p-2 border rounded text-sm">
+          <label class="block text-xs font-semibold text-gray-700 uppercase">Phone Number (WhatsApp)</label>
+          <input type="text" id="modalAgentPhone" required placeholder="e.g. +254712345678" class="w-full mt-1 p-2 border rounded text-xs">
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeAddAgentModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded text-sm font-medium">Cancel</button>
-          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Save Agent</button>
+          <button type="button" onclick="closeAddAgentModal()" class="px-3 py-1.5 border rounded text-xs font-semibold text-gray-600">Cancel</button>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">Save Agent</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- EDIT VISIT MODAL -->
-  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-gray-900">Edit Visit Record</h3>
-        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
-      </div>
-      <form id="editForm" class="space-y-3">
-        <input type="hidden" id="editId">
-        <div>
-          <label class="block text-xs font-medium text-gray-700">Agent Name / Email</label>
-          <input type="text" id="editAgentName" required class="w-full mt-1 p-2 border rounded text-sm">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-700">CFID</label>
-            <input type="text" id="editCfid" required class="w-full mt-1 p-2 border rounded text-sm">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700">Customer Name</label>
-            <input type="text" id="editCustomerName" required class="w-full mt-1 p-2 border rounded text-sm">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-700">Client / Institution Name</label>
-            <input type="text" id="editClientName" class="w-full mt-1 p-2 border rounded text-sm">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700">Account Number</label>
-            <input type="text" id="editAccountNumber" required class="w-full mt-1 p-2 border rounded text-sm">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-700">Outcome</label>
-            <select id="editOutcome" required class="w-full mt-1 p-2 border rounded text-sm bg-white">
-              <option value="Paid">Paid</option>
-              <option value="Promised to Pay">Promise to Pay</option>
-              <option value="Negotiation">Negotiation</option>
-              <option value="Not Found">Not Found</option>
-              <option value="Refused">Refused</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700">Amount (KSh)</label>
-            <input type="number" id="editAmountCollected" min="0" class="w-full mt-1 p-2 border rounded text-sm">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700">Expenses Incurred (KSh)</label>
-          <input type="number" id="editExpensesIncurred" min="0" class="w-full mt-1 p-2 border rounded text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700">Notes</label>
-          <textarea id="editNotes" rows="2" class="w-full mt-1 p-2 border rounded text-sm"></textarea>
-        </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded text-sm font-medium">Cancel</button>
-          <button type="submit" id="saveEditBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <footer class="text-center py-4 text-xs text-gray-400 border-t mt-6">
+    Field Operations Dashboard • Supabase Integrated
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -264,101 +172,147 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
     const supabaseAgent = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const ADMIN_PASSCODE = "1234"; 
     let allVisits = [];
-    let myChart = null;
+    let allAgents = [];
+    let outcomeChartInstance = null;
 
-    async function checkUserSession() {
-      const { data: { session } } = await supabaseAgent.auth.getSession();
-      if (session) {
-        showDashboard();
+    // Check session login state
+    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+      document.getElementById('authOverlay').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+      loadDashboardData();
+    }
+
+    function verifyAdminPasscode(e) {
+      e.preventDefault();
+      const input = document.getElementById('passcodeInput').value;
+      if (input === ADMIN_PASSCODE) {
+        sessionStorage.setItem('adminLoggedIn', 'true');
+        document.getElementById('authOverlay').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
+        loadDashboardData();
       } else {
-        showLogin();
+        document.getElementById('authError').classList.remove('hidden');
       }
     }
 
-    function showLogin() {
-      document.getElementById('loginContainer').classList.remove('hidden');
-      document.getElementById('dashboardContainer').classList.add('hidden');
+    function lockAdmin() {
+      sessionStorage.removeItem('adminLoggedIn');
+      location.reload();
     }
 
-    function showDashboard() {
-      document.getElementById('loginContainer').classList.add('hidden');
-      document.getElementById('dashboardContainer').classList.remove('hidden');
-      fetchVisits();
-      fetchAgents();
+    async function loadDashboardData() {
+      await fetchVisits();
+      await fetchAgents();
     }
-
-    async function handleLogin() {
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
-      const btn = document.getElementById('loginBtn');
-      
-      if (!emailInput || !passwordInput) return;
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      
-      btn.textContent = 'Signing in...';
-      btn.disabled = true;
-
-      try {
-        const { data, error } = await supabaseAgent.auth.signInWithPassword({ email, password });
-        if (error) {
-          alert('Login failed: ' + error.message);
-          btn.textContent = 'Sign In';
-          btn.disabled = false;
-        } else {
-          showDashboard();
-        }
-      } catch (err) {
-        alert('Authentication error: ' + err.message);
-        btn.textContent = 'Sign In';
-        btn.disabled = false;
-      }
-    }
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await supabaseAgent.auth.signOut();
-      showLogin();
-    });
 
     async function fetchVisits() {
-      const tbody = document.getElementById('visitsTableBody');
-      tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
-
       try {
-        const { data, error } = await supabaseAgent
-          .from('visits')
-          .select('*')
-          .order('created_at', { ascending: false });
-
+        const { data, error } = await supabaseAgent.from('visits').select('*').order('created_at', { ascending: false });
         if (error) throw error;
         allVisits = data || [];
-        
-        populateMonthFilter();
-        filterData();
+        renderMetrics();
+        renderChart();
+        renderLeaderboard();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
+        console.error("Error fetching visits:", err.message);
       }
     }
 
-    // Fetch and render registered agents for quick WhatsApp dispatch
+    function renderMetrics() {
+      let totalVisits = allVisits.length;
+      let totalCollected = 0;
+      let totalPTP = 0;
+      let totalExpenses = 0;
+
+      allVisits.forEach(v => {
+        totalCollected += parseFloat(v.amount_collected || 0);
+        totalExpenses += parseFloat(v.expenses_incurred || 0);
+        if (v.outcome === 'Promised to Pay') totalPTP++;
+      });
+
+      document.getElementById('statTotalVisits').textContent = totalVisits.toLocaleString();
+      document.getElementById('statTotalCollected').textContent = totalCollected.toLocaleString();
+      document.getElementById('statTotalPTP').textContent = totalPTP.toLocaleString();
+      document.getElementById('statTotalExpenses').textContent = totalExpenses.toLocaleString();
+    }
+
+    function renderChart() {
+      const counts = { 'Paid': 0, 'Promised to Pay': 0, 'Negotiation': 0, 'Not Found': 0, 'Refused': 0 };
+      allVisits.forEach(v => {
+        if (counts[v.outcome] !== undefined) counts[v.outcome]++;
+      });
+
+      const ctx = document.getElementById('outcomeChart').getContext('2d');
+      if (outcomeChartInstance) outcomeChartInstance.destroy();
+
+      outcomeChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            data: Object.values(counts),
+            backgroundColor: ['#16a34a', '#2563eb', '#4f46e5', '#d97706', '#dc2626']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    function renderLeaderboard() {
+      const stats = {};
+      allVisits.forEach(v => {
+        const name = (v.agent_name || 'Unassigned').trim();
+        if (!stats[name]) stats[name] = { visits: 0, collected: 0, expenses: 0 };
+        stats[name].visits++;
+        stats[name].collected += parseFloat(v.amount_collected || 0);
+        stats[name].expenses += parseFloat(v.expenses_incurred || 0);
+      });
+
+      const sorted = Object.entries(stats).sort((a, b) => b[1].collected - a[1].collected);
+      const tbody = document.getElementById('leaderboardBody');
+      
+      if (sorted.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No agent reports logged yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      sorted.forEach(([agent, s]) => {
+        const net = s.collected - s.expenses;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-gray-800">${agent}</td>
+          <td class="p-2.5 text-center">${s.visits}</td>
+          <td class="p-2.5 text-right font-bold text-green-600">KSh ${s.collected.toLocaleString()}</td>
+          <td class="p-2.5 text-right text-red-500">KSh ${s.expenses.toLocaleString()}</td>
+          <td class="p-2.5 text-right font-bold ${net >= 0 ? 'text-blue-700' : 'text-red-700'}">KSh ${net.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     async function fetchAgents() {
       const container = document.getElementById('agentDirectoryList');
       try {
         const { data, error } = await supabaseAgent.from('agents').select('*').order('name');
         if (error) throw error;
+        allAgents = data || [];
 
-        if (!data || data.length === 0) {
+        if (allAgents.length === 0) {
           container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No agents added yet. Click "+ Add Agent".</p>';
           return;
         }
 
         container.innerHTML = '';
-        data.forEach(agent => {
+        allAgents.forEach(agent => {
           const cleanPhone = agent.phone.replace(/[^0-9+]/g, '');
-          const msg = encodeURIComponent(`Good morning ${agent.name}, please remember to head out for your scheduled field operations and follow up on pending accounts today. Let's hit our targets!`);
-          const smsMsg = encodeURIComponent(`Hello ${agent.name}, time for field operations and account follow-ups today. Let's execute!`);
+          const msg = encodeURIComponent(`Good morning ${agent.name}, please make sure you look for field accounts and head out for field operations today. Let's hit our targets!`);
+          const smsMsg = encodeURIComponent(`Hello ${agent.name}, please make sure you look for field accounts and head out for field today.`);
 
           const div = document.createElement('div');
           div.className = "flex justify-between items-center p-2 rounded border bg-gray-50 text-xs";
@@ -379,297 +333,93 @@
       }
     }
 
+    // Broadcast SMS to all numbers at once
+    function broadcastSMS() {
+      if (allAgents.length === 0) {
+        alert("No registered agents found to send SMS to.");
+        return;
+      }
+      
+      const phoneNumbers = allAgents.map(a => a.phone.replace(/[^0-9+]/g, '')).join(',');
+      const message = encodeURIComponent("Good morning team! Please make sure you look for field accounts and head out for field operations today.");
+      
+      window.location.href = `sms:${phoneNumbers}?body=${message}`;
+    }
+
+    // Sequential WhatsApp Broadcast
+    function broadcastWhatsApp() {
+      if (allAgents.length === 0) {
+        alert("No registered agents found.");
+        return;
+      }
+
+      const confirmSend = confirm(`This will open WhatsApp chats sequentially for ${allAgents.length} agent(s). Do you want to proceed?`);
+      if (!confirmSend) return;
+
+      allAgents.forEach((agent, index) => {
+        setTimeout(() => {
+          const cleanPhone = agent.phone.replace(/[^0-9+]/g, '');
+          const msg = encodeURIComponent(`Good morning ${agent.name}, please make sure you look for field accounts and head out for field operations today. Let's hit our targets!`);
+          window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+        }, index * 1200);
+      });
+    }
+
     function openAddAgentModal() {
       document.getElementById('agentModal').classList.remove('hidden');
     }
 
     function closeAddAgentModal() {
       document.getElementById('agentModal').classList.add('hidden');
-      document.getElementById('agentForm').reset();
     }
 
     async function saveAgent(e) {
       e.preventDefault();
-      const name = document.getElementById('newAgentName').value.trim();
-      const phone = document.getElementById('newAgentPhone').value.trim();
+      const name = document.getElementById('modalAgentName').value.trim();
+      const phone = document.getElementById('modalAgentPhone').value.trim();
 
-      const { error } = await supabaseAgent.from('agents').insert([{ name, phone }]);
-      if (error) {
-        alert('Failed to save agent: ' + error.message);
-      } else {
+      try {
+        const { error } = await supabaseAgent.from('agents').insert([{ name, phone }]);
+        if (error) throw error;
+        
         closeAddAgentModal();
+        document.getElementById('modalAgentName').value = '';
+        document.getElementById('modalAgentPhone').value = '';
         fetchAgents();
+      } catch (err) {
+        alert("Failed to save agent: " + err.message);
       }
     }
-
-    function populateMonthFilter() {
-      const monthFilter = document.getElementById('monthFilter');
-      const selectedVal = monthFilter.value;
-      const monthsSet = new Set();
-      allVisits.forEach(v => {
-        if (v.created_at) monthsSet.add(v.created_at.slice(0, 7));
-      });
-
-      const sortedMonths = Array.from(monthsSet).sort().reverse();
-      monthFilter.innerHTML = '<option value="">All Months</option>';
-      sortedMonths.forEach(m => {
-        const dateObj = new Date(m + '-01');
-        const label = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = label;
-        monthFilter.appendChild(opt);
-      });
-
-      const currentMonthKey = new Date().toISOString().slice(0, 7);
-      if (sortedMonths.includes(currentMonthKey) && !selectedVal) {
-        monthFilter.value = currentMonthKey;
-      } else if (selectedVal) {
-        monthFilter.value = selectedVal;
-      }
-    }
-
-    function renderTable(visits) {
-      const tbody = document.getElementById('visitsTableBody');
-      if (visits.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = '';
-      visits.forEach(visit => {
-        const dateStr = visit.created_at ? new Date(visit.created_at).toLocaleString() : '';
-        let photosHtml = 'None';
-        if (visit.photo_url) {
-          try {
-            const parsed = JSON.parse(visit.photo_url);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              photosHtml = parsed.map((url, idx) => `<a href="${url}" target="_blank" class="text-blue-600 underline font-medium text-xs block">Photo ${idx + 1}</a>`).join('');
-            } else {
-              photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
-            }
-          } catch {
-            photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
-          }
-        }
-
-        const rawAcc = visit.account_number ? String(visit.account_number) : '';
-        const maskedAcc = rawAcc.length > 4 ? '•••• ' + rawAcc.slice(-4) : (rawAcc || '-');
-        const clientDisplay = visit.client_name ? `${visit.client_name} (${maskedAcc})` : maskedAcc;
-
-        const isPaid = visit.outcome === 'Paid';
-        const isPromise = visit.outcome === 'Promised to Pay';
-        const amt = visit.amount_collected ? Number(visit.amount_collected).toLocaleString() : '0';
-
-        const paidHtml = isPaid ? `<span class="font-semibold text-green-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
-        const promiseHtml = isPromise ? `<span class="font-semibold text-blue-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
-        const notesDisplay = visit.notes ? `<span class="text-gray-600 text-xs italic max-w-xs block truncate" title="${visit.notes.replace(/"/g, '&quot;')}">${visit.notes}</span>` : `<span class="text-gray-400">-</span>`;
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 transition';
-        tr.innerHTML = `
-          <td class="p-3 whitespace-nowrap text-gray-500 text-xs">${dateStr}</td>
-          <td class="p-3 font-medium">${visit.agent_name || ''}</td>
-          <td class="p-3 font-medium text-gray-900">${visit.cfid || '-'}</td>
-          <td class="p-3 text-gray-700">${visit.customer_name || '-'}</td>
-          <td class="p-3 text-sm font-semibold text-gray-800 font-mono">${clientDisplay}</td>
-          <td class="p-3">${paidHtml}</td>
-          <td class="p-3">${promiseHtml}</td>
-          <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
-          <td class="p-3">${notesDisplay}</td>
-          <td class="p-3">${photosHtml}</td>
-          <td class="p-3 text-center space-x-1 whitespace-nowrap">
-            <button onclick="openEditModal('${visit.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded text-xs font-semibold transition">Edit</button>
-            <button onclick="deleteVisit('${visit.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 px-2.5 py-1 rounded text-xs font-semibold transition">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.openEditModal = function(id) {
-      const visit = allVisits.find(v => v.id === id);
-      if (!visit) return;
-
-      document.getElementById('editId').value = visit.id;
-      document.getElementById('editAgentName').value = visit.agent_name || '';
-      document.getElementById('editCfid').value = visit.cfid || '';
-      document.getElementById('editCustomerName').value = visit.customer_name || '';
-      document.getElementById('editClientName').value = visit.client_name || '';
-      document.getElementById('editAccountNumber').value = visit.account_number || '';
-      document.getElementById('editOutcome').value = visit.outcome || 'Paid';
-      document.getElementById('editAmountCollected').value = visit.amount_collected || 0;
-      document.getElementById('editExpensesIncurred').value = visit.expenses_incurred || 0;
-      document.getElementById('editNotes').value = visit.notes || '';
-
-      document.getElementById('editModal').classList.remove('hidden');
-    }
-
-    window.closeEditModal = function() {
-      document.getElementById('editModal').classList.add('hidden');
-    }
-
-    document.getElementById('editForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('editId').value;
-      const saveBtn = document.getElementById('saveEditBtn');
-      saveBtn.textContent = 'Saving...';
-      saveBtn.disabled = true;
-
-      const updatedData = {
-        agent_name: document.getElementById('editAgentName').value,
-        cfid: document.getElementById('editCfid').value,
-        customer_name: document.getElementById('editCustomerName').value,
-        client_name: document.getElementById('editClientName').value,
-        account_number: document.getElementById('editAccountNumber').value,
-        outcome: document.getElementById('editOutcome').value,
-        amount_collected: parseFloat(document.getElementById('editAmountCollected').value) || 0,
-        expenses_incurred: parseFloat(document.getElementById('editExpensesIncurred').value) || 0,
-        notes: document.getElementById('editNotes').value
-      };
-
-      const { error } = await supabaseAgent.from('visits').update(updatedData).eq('id', id);
-      if (error) {
-        alert('Failed to update record: ' + error.message);
-      } else {
-        closeEditModal();
-        fetchVisits();
-      }
-      saveBtn.textContent = 'Save Changes';
-      saveBtn.disabled = false;
-    });
-
-    function updateSummaryCards(visits) {
-      let totalCollected = 0;
-      let totalPtp = 0;
-      let totalExpenses = 0;
-
-      visits.forEach(v => {
-        const amt = Number(v.amount_collected) || 0;
-        if (v.outcome === 'Paid') totalCollected += amt;
-        else if (v.outcome === 'Promised to Pay') totalPtp += amt;
-        totalExpenses += Number(v.expenses_incurred) || 0;
-      });
-
-      document.getElementById('totalCollections').textContent = 'KSh ' + totalCollected.toLocaleString();
-      document.getElementById('totalPtp').textContent = 'KSh ' + totalPtp.toLocaleString();
-      document.getElementById('totalExpenses').textContent = 'KSh ' + totalExpenses.toLocaleString();
-      document.getElementById('totalVisitsCount').textContent = visits.length.toLocaleString();
-    }
-
-    function updateLeaderboard(visits) {
-      const leaderboardContainer = document.getElementById('leaderboardList');
-      if (!leaderboardContainer) return;
-
-      const agentStats = {};
-      visits.forEach(v => {
-        const agent = v.agent_name ? v.agent_name.trim() : 'Unknown Agent';
-        if (!agentStats[agent]) agentStats[agent] = { collections: 0, ptp: 0, visits: 0 };
-        agentStats[agent].visits++;
-        const amt = Number(v.amount_collected) || 0;
-        if (v.outcome === 'Paid') agentStats[agent].collections += amt;
-        else if (v.outcome === 'Promised to Pay') agentStats[agent].ptp += amt;
-      });
-
-      const sortedAgents = Object.entries(agentStats).sort((a, b) => b[1].collections - a[1].collections);
-
-      if (sortedAgents.length === 0) {
-        leaderboardContainer.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No records found.</p>';
-        return;
-      }
-
-      leaderboardContainer.innerHTML = '';
-      sortedAgents.forEach(([name, stats], index) => {
-        const row = document.createElement('div');
-        row.className = `flex justify-between items-center p-2 rounded border bg-white text-xs`;
-        row.innerHTML = `
-          <div>
-            <p class="font-bold text-gray-900">#${index + 1} ${name}</p>
-            <p class="text-gray-500">${stats.visits} visits</p>
-          </div>
-          <div class="text-right">
-            <p class="font-bold text-green-700">KSh ${stats.collections.toLocaleString()}</p>
-          </div>
-        `;
-        leaderboardContainer.appendChild(row);
-      });
-    }
-
-    function updateChart(visits) {
-      const counts = { 'Promised to Pay': 0, 'Paid': 0, 'Negotiation': 0, 'Not Found': 0, 'Refused': 0 };
-      visits.forEach(v => { if (counts[v.outcome] !== undefined) counts[v.outcome]++; });
-
-      const ctx = document.getElementById('outcomesChart').getContext('2d');
-      if (myChart) myChart.destroy();
-
-      myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(counts),
-          datasets: [{
-            data: Object.values(counts),
-            backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
-        }
-      });
-    }
-
-    function filterData() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const monthVal = document.getElementById('monthFilter').value;
-      const outcomeVal = document.getElementById('outcomeFilter').value;
-      const startDateVal = document.getElementById('startDate').value;
-      const endDateVal = document.getElementById('endDate').value;
-
-      const filtered = allVisits.filter(v => {
-        const matchesSearch = String(v.account_number || '').toLowerCase().includes(searchTerm) ||
-                            String(v.client_name || '').toLowerCase().includes(searchTerm) ||
-                            String(v.agent_name || '').toLowerCase().includes(searchTerm) ||
-                            String(v.cfid || '').toLowerCase().includes(searchTerm) ||
-                            String(v.customer_name || '').toLowerCase().includes(searchTerm);
-        const matchesOutcome = outcomeVal === '' || v.outcome === outcomeVal;
-        let matchesMonth = monthVal ? (v.created_at && v.created_at.slice(0, 7) === monthVal) : true;
-        let matchesDate = true;
-        if (v.created_at) {
-          const visitDate = v.created_at.slice(0, 10);
-          if (startDateVal && visitDate < startDateVal) matchesDate = false;
-          if (endDateVal && visitDate > endDateVal) matchesDate = false;
-        }
-        return matchesSearch && matchesOutcome && matchesMonth && matchesDate;
-      });
-
-      renderTable(filtered);
-      updateSummaryCards(filtered);
-      updateChart(filtered);
-      updateLeaderboard(filtered);
-    }
-
-    window.deleteVisit = async function(id) {
-      if (!confirm('Are you sure you want to delete this visit record?')) return;
-      const { error } = await supabaseAgent.from('visits').delete().eq('id', id);
-      if (error) alert('Failed to delete: ' + error.message);
-      else fetchVisits();
-    };
 
     function exportToCSV() {
-      // CSV export handler omitted for brevity, keeping existing function setup
-      fetchVisits();
-    }
+      if (allVisits.length === 0) {
+        alert("No data available to export.");
+        return;
+      }
 
-    document.getElementById('searchInput').addEventListener('input', filterData);
-    document.getElementById('monthFilter').addEventListener('change', filterData);
-    document.getElementById('outcomeFilter').addEventListener('change', filterData);
-    document.getElementById('startDate').addEventListener('change', filterData);
-    document.getElementById('endDate').addEventListener('change', filterData);
-    document.getElementById('refreshBtn').addEventListener('click', fetchVisits);
-    
-    checkUserSession();
+      const headers = ["Date", "Agent Name", "CFID", "Customer Name", "Client Name", "Account Number", "Outcome", "Amount Collected", "Expenses Incurred", "Notes"];
+      const rows = allVisits.map(v => [
+        v.created_at ? new Date(v.created_at).toISOString() : '',
+        `"${v.agent_name || ''}"`,
+        `"${v.cfid || ''}"`,
+        `"${v.customer_name || ''}"`,
+        `"${v.client_name || ''}"`,
+        `"${v.account_number || ''}"`,
+        `"${v.outcome || ''}"`,
+        v.amount_collected || 0,
+        v.expenses_incurred || 0,
+        `"${(v.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Field_Ops_Report_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
 </body>
 </html>
