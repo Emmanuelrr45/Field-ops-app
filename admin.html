@@ -4,7 +4,395 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Ops - Admin<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Field Ops - Admin Dashboard & Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+  <!-- LOGIN CONTAINER -->
+  <div id="loginContainer" class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
+      <div class="text-center">
+        <h1 class="text-2xl font-bold text-gray-900">Admin Login</h1>
+        <p class="text-sm text-gray-500 mt-1">Enter your credentials to access analytics & reports</p>
+      </div>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email Address</label>
+          <input type="email" id="email" required class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password" required class="w-full mt-1 p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-semibold transition">
+          Sign In
+        </button>
+      </form>
+      <div class="text-center">
+        <a href="index.html" class="text-sm text-blue-600 hover:underline">← Back to Field Form</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD CONTAINER -->
+  <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
+    <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow">
+      <h1 class="text-xl font-bold">Admin Analytics & Reports</h1>
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-sm font-semibold transition">Form</a>
+        <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-semibold transition">Logout</button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 space-y-6 mt-4 flex-grow w-full">
+      
+      <!-- Summary Totals Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-500 flex flex-col justify-between">
+          <p class="text-sm text-gray-500 font-medium">Selected Month (Paid)</p>
+          <h2 id="totalCollections" class="text-2xl font-bold text-green-700 mt-2">KSh 0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500 flex flex-col justify-between">
+          <p class="text-sm text-gray-500 font-medium">Selected Month (PTP)</p>
+          <h2 id="totalPtp" class="text-2xl font-bold text-blue-700 mt-2">KSh 0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-orange-500 flex flex-col justify-between">
+          <p class="text-sm text-gray-500 font-medium">Selected Month Expenses</p>
+          <h2 id="totalExpenses" class="text-2xl font-bold text-orange-600 mt-2">KSh 0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-md border-l-4 border-purple-500 flex flex-col justify-between">
+          <p class="text-sm text-gray-500 font-medium">Visits Logged (Selected)</p>
+          <h2 id="totalVisitsCount" class="text-2xl font-bold text-purple-800 mt-2">0</h2>
+        </div>
+      </div>
+
+      <!-- Analytics Chart Section -->
+      <div class="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        <div class="md:col-span-1 space-y-2">
+          <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
+          <p class="text-sm text-gray-500">Breakdown of field metrics based on active month and search filters.</p>
+        </div>
+        <div class="md:col-span-2 flex justify-center">
+          <div class="w-full max-w-xs h-64">
+            <canvas id="outcomesChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Data Table Container with Filters -->
+      <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+          <input type="text" id="searchInput" placeholder="Search account, client, or agent..." class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
+          
+          <!-- Month Selector -->
+          <select id="monthFilter" class="p-2 border rounded text-sm bg-white font-medium text-blue-900 border-blue-300 focus:ring-blue-500 focus:border-blue-500 w-full">
+            <option value="">All Months</option>
+          </select>
+
+          <select id="outcomeFilter" class="p-2 border rounded text-sm bg-white focus:ring-blue-500 focus:border-blue-500 w-full">
+            <option value="">All Outcomes</option>
+            <option value="Paid">Paid</option>
+            <option value="Promised to Pay">Promise to Pay</option>
+            <option value="Negotiation">Negotiation</option>
+            <option value="Not Found">Not Found</option>
+            <option value="Refused">Refused</option>
+          </select>
+
+          <div class="flex items-center gap-2 w-full">
+            <input type="date" id="startDate" title="Start Date" class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
+            <input type="date" id="endDate" title="End Date" class="p-2 border rounded text-sm w-full focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div class="flex items-center gap-2 justify-end w-full">
+            <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium transition w-full md:w-auto">Export CSV</button>
+            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition w-full md:w-auto">Refresh</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-200 text-gray-700 text-xs uppercase tracking-wider">
+                <th class="p-3">Time</th>
+                <th class="p-3">Agent</th>
+                <th class="p-3">CFID</th>
+                <th class="p-3">Customer</th>
+                <th class="p-3">Client / Account</th>
+                <th class="p-3 text-green-700">Paid</th>
+                <th class="p-3 text-blue-700">Promise to Pay</th>
+                <th class="p-3">Expenses</th>
+                <th class="p-3">Notes</th>
+                <th class="p-3">Photos</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="visitsTableBody" class="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-gray-900">Edit Visit Record</h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+      </div>
+      <form id="editForm" class="space-y-3">
+        <input type="hidden" id="editId">
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Agent Name / Email</label>
+          <input type="text" id="editAgentName" required class="w-full mt-1 p-2 border rounded text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">CFID</label>
+            <input type="text" id="editCfid" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Customer Name</label>
+            <input type="text" id="editCustomerName" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Client / Institution Name</label>
+            <input type="text" id="editClientName" class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Account Number</label>
+            <input type="text" id="editAccountNumber" required class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Outcome</label>
+            <select id="editOutcome" required class="w-full mt-1 p-2 border rounded text-sm bg-white">
+              <option value="Paid">Paid</option>
+              <option value="Promised to Pay">Promise to Pay</option>
+              <option value="Negotiation">Negotiation</option>
+              <option value="Not Found">Not Found</option>
+              <option value="Refused">Refused</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700">Amount (KSh)</label>
+            <input type="number" id="editAmountCollected" min="0" class="w-full mt-1 p-2 border rounded text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Expenses Incurred (KSh)</label>
+          <input type="number" id="editExpensesIncurred" min="0" class="w-full mt-1 p-2 border rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700">Notes</label>
+          <textarea id="editNotes" rows="2" class="w-full mt-1 p-2 border rounded text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded text-sm font-medium">Cancel</button>
+          <button type="submit" id="saveEditBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bwzrklomhkoxbmpimpwc.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3enJrbG9taGtveGJtcGltcHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzEzOTYsImV4cCI6MjEwMjUwNzM5Nn0.z3AiguJaFH9Ybjg-xWMJZQQ5eLSrWvlDKlyVd4KdTis";
+    const supabaseAgent = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allVisits = [];
+    let myChart = null;
+
+    async function checkUserSession() {
+      const { data: { session } } = await supabaseAgent.auth.getSession();
+      if (session) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('loginContainer').classList.remove('hidden');
+      document.getElementById('dashboardContainer').classList.add('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('dashboardContainer').classList.remove('hidden');
+      fetchVisits();
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      
+      btn.textContent = 'Signing in...';
+      btn.disabled = true;
+
+      const { data, error } = await supabaseAgent.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        alert('Login failed: ' + error.message);
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+      } else {
+        showDashboard();
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await supabaseAgent.auth.signOut();
+      showLogin();
+    });
+
+    async function fetchVisits() {
+      const tbody = document.getElementById('visitsTableBody');
+      tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">Loading records...</td></tr>';
+
+      try {
+        const { data, error } = await supabaseAgent
+          .from('visits')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allVisits = data || [];
+        
+        populateMonthFilter();
+        filterData();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-red-600">Failed to load data: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Populate the dropdown with unique YYYY-MM entries based on database records
+    function populateMonthFilter() {
+      const monthFilter = document.getElementById('monthFilter');
+      const selectedVal = monthFilter.value;
+      
+      const monthsSet = new Set();
+      allVisits.forEach(v => {
+        if (v.created_at) {
+          const yearMonth = v.created_at.slice(0, 7); // e.g. "2026-03"
+          monthsSet.add(yearMonth);
+        }
+      });
+
+      const sortedMonths = Array.from(monthsSet).sort().reverse();
+      
+      monthFilter.innerHTML = '<option value="">All Months</option>';
+      sortedMonths.forEach(m => {
+        const dateObj = new Date(m + '-01');
+        const label = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = label;
+        monthFilter.appendChild(opt);
+      });
+
+      // Default to current month if records exist for it
+      const currentMonthKey = new Date().toISOString().slice(0, 7);
+      if (sortedMonths.includes(currentMonthKey) && !selectedVal) {
+        monthFilter.value = currentMonthKey;
+      } else if (selectedVal) {
+        monthFilter.value = selectedVal;
+      }
+    }
+
+    function renderTable(visits) {
+      const tbody = document.getElementById('visitsTableBody');
+      if (visits.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="p-4 text-center text-gray-500">No matching visit records found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      visits.forEach(visit => {
+        const dateStr = visit.created_at ? new Date(visit.created_at).toLocaleString() : '';
+
+        let photosHtml = 'None';
+        if (visit.photo_url) {
+          try {
+            const parsed = JSON.parse(visit.photo_url);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              photosHtml = parsed.map((url, idx) => `<a href="${url}" target="_blank" class="text-blue-600 underline font-medium text-xs block">Photo ${idx + 1}</a>`).join('');
+            } else {
+              photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
+            }
+          } catch {
+            photosHtml = `<a href="${visit.photo_url}" target="_blank" class="text-blue-600 underline font-medium text-xs">View Photo</a>`;
+          }
+        }
+
+        const rawAcc = visit.account_number ? String(visit.account_number) : '';
+        const maskedAcc = rawAcc.length > 4 ? '•••• ' + rawAcc.slice(-4) : (rawAcc || '-');
+
+        const clientDisplay = visit.client_name ? `${visit.client_name} (${maskedAcc})` : maskedAcc;
+
+        const isPaid = visit.outcome === 'Paid';
+        const isPromise = visit.outcome === 'Promised to Pay';
+        const amt = visit.amount_collected ? Number(visit.amount_collected).toLocaleString() : '0';
+
+        const paidHtml = isPaid ? `<span class="font-semibold text-green-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
+        const promiseHtml = isPromise ? `<span class="font-semibold text-blue-700">KSh ${amt}</span>` : `<span class="text-gray-400">-</span>`;
+        const notesDisplay = visit.notes ? `<span class="text-gray-600 text-xs italic max-w-xs block truncate" title="${visit.notes.replace(/"/g, '&quot;')}">${visit.notes}</span>` : `<span class="text-gray-400">-</span>`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition';
+        tr.innerHTML = `
+          <td class="p-3 whitespace-nowrap text-gray-500 text-xs">${dateStr}</td>
+          <td class="p-3 font-medium">${visit.agent_name || ''}</td>
+          <td class="p-3 font-medium text-gray-900">${visit.cfid || '-'}</td>
+          <td class="p-3 text-gray-700">${visit.customer_name || '-'}</td>
+          <td class="p-3 text-sm font-semibold text-gray-800 font-mono">${clientDisplay}</td>
+          <td class="p-3">${paidHtml}</td>
+          <td class="p-3">${promiseHtml}</td>
+          <td class="p-3 font-semibold text-orange-600">${visit.expenses_incurred ? 'KSh ' + Number(visit.expenses_incurred).toLocaleString() : '0'}</td>
+          <td class="p-3">${notesDisplay}</td>
+          <td class="p-3">${photosHtml}</td>
+          <td class="p-3 text-center space-x-1 whitespace-nowrap">
+            <button onclick="openEditModal('${visit.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded text-xs font-semibold transition">Edit</button>
+            <button onclick="deleteVisit('${visit.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 px-2.5 py-1 rounded text-xs font-semibold transition">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Edit Modal Functions
+    window.openEditModal = function(id) {
+      const visit = allVisits.find(v => v.id === id);
+      if (!visit) return;
+
+      document.getElementById('editId').value = visit.id;
+      document.getElementById('editAgentName').value = visit.agent_name || '';
+      document.getElementById('editCfid').value = visit.cfid || '';
+      document.getElementById('editCustomerName').value = visit.customer_name || '';
+      document.getElementById('editClientName').value = visit.client_name || '';
+      document.getElementById('editAccountNumber').value = visit.account_number || '';
+      document.getElementById('editOutcome').value = visit.outcome || 'Paid';
+      document.getElementById('
+ Dashboard & Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -511,38 +899,4 @@
           const visitDate = v.created_at.slice(0, 10);
           if (startDateVal && visitDate < startDateVal) matchesDate = false;
           if (endDateVal && visitDate > endDateVal) matchesDate = false;
-        }
-        return matchesSearch && matchesOutcome && matchesDate;
-      });
 
-      if (dataToExport.length === 0) {
-        alert('No data to export based on current filters!');
-        return;
-      }
-
-      let csv = 'Timestamp,Agent Name,CFID,Customer Name,Client Name,Account Number,Outcome,Amount Collected,Expenses Incurred,Notes\n';
-      dataToExport.forEach(v => {
-        csv += `"${v.created_at || ''}","${v.agent_name || ''}","${v.cfid || ''}","${v.customer_name || ''}","${v.client_name || ''}","${v.account_number || ''}","${v.outcome || ''}","${v.amount_collected || 0}","${v.expenses_incurred || 0}","${(v.notes || '').replace(/"/g, '""')}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      a.setAttribute('download', `visit_reports_${new Date().toISOString().slice(0,10)}.csv`);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    document.getElementById('searchInput').addEventListener('input', filterData);
-    document.getElementById('outcomeFilter').addEventListener('change', filterData);
-    document.getElementById('startDate').addEventListener('change', filterData);
-    document.getElementById('endDate').addEventListener('change', filterData);
-    document.getElementById('refreshBtn').addEventListener('click', fetchVisits);
-    document.getElementById('exportBtn').addEventListener('click', exportToCSV);
-    
-    checkUserSession();
-  </script>
-</body>
-</html>
