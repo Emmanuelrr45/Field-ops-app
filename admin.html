@@ -17,7 +17,6 @@
         <h1 class="text-2xl font-bold text-gray-900">Admin Login</h1>
         <p class="text-sm text-gray-500 mt-1">Enter your credentials to access analytics & reports</p>
       </div>
-      <!-- Replaced <form> with <div> container to prevent any browser page reloads -->
       <div id="loginForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Email Address</label>
@@ -69,17 +68,33 @@
         </div>
       </div>
 
-      <!-- Analytics Chart Section -->
-      <div class="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-        <div class="md:col-span-1 space-y-2">
-          <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
-          <p class="text-sm text-gray-500">Breakdown of field metrics based on active month and search filters.</p>
-        </div>
-        <div class="md:col-span-2 flex justify-center">
-          <div class="w-full max-w-xs h-64">
-            <canvas id="outcomesChart"></canvas>
+      <!-- Analytics Chart & Leaderboard Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Visit Outcomes Chart -->
+        <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">Visit Outcomes</h2>
+            <p class="text-sm text-gray-500">Breakdown based on active month and filters.</p>
+          </div>
+          <div class="flex justify-center my-4">
+            <div class="w-full max-w-xs h-56">
+              <canvas id="outcomesChart"></canvas>
+            </div>
           </div>
         </div>
+
+        <!-- Agent Performance Leaderboard -->
+        <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">🏆 Agent Leaderboard</h2>
+            <p class="text-sm text-gray-500 mb-3">Ranked by total collections for selected period.</p>
+          </div>
+          <div id="leaderboardList" class="space-y-2 overflow-y-auto max-h-60 pr-1">
+            <p class="text-sm text-gray-500 text-center py-6">Loading leaderboard...</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- Main Data Table Container with Filters -->
@@ -235,7 +250,6 @@
       fetchVisits();
     }
 
-    // Direct Login Function triggered via onclick (No form refreshing issues)
     async function handleLogin() {
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
@@ -358,7 +372,6 @@
 
         const rawAcc = visit.account_number ? String(visit.account_number) : '';
         const maskedAcc = rawAcc.length > 4 ? '•••• ' + rawAcc.slice(-4) : (rawAcc || '-');
-
         const clientDisplay = visit.client_name ? `${visit.client_name} (${maskedAcc})` : maskedAcc;
 
         const isPaid = visit.outcome === 'Paid';
@@ -391,7 +404,6 @@
       });
     }
 
-    // Edit Modal Functions
     window.openEditModal = function(id) {
       const visit = allVisits.find(v => v.id === id);
       if (!visit) return;
@@ -466,6 +478,64 @@
       document.getElementById('totalPtp').textContent = 'KSh ' + totalPtp.toLocaleString();
       document.getElementById('totalExpenses').textContent = 'KSh ' + totalExpenses.toLocaleString();
       document.getElementById('totalVisitsCount').textContent = visits.length.toLocaleString();
+    }
+
+    function updateLeaderboard(visits) {
+      const leaderboardContainer = document.getElementById('leaderboardList');
+      if (!leaderboardContainer) return;
+
+      const agentStats = {};
+
+      visits.forEach(v => {
+        const agent = v.agent_name ? v.agent_name.trim() : 'Unknown Agent';
+        if (!agentStats[agent]) {
+          agentStats[agent] = { collections: 0, ptp: 0, visits: 0 };
+        }
+        
+        agentStats[agent].visits++;
+        const amt = Number(v.amount_collected) || 0;
+        if (v.outcome === 'Paid') {
+          agentStats[agent].collections += amt;
+        } else if (v.outcome === 'Promised to Pay') {
+          agentStats[agent].ptp += amt;
+        }
+      });
+
+      const sortedAgents = Object.entries(agentStats).sort((a, b) => {
+        if (b[1].collections !== a[1].collections) {
+          return b[1].collections - a[1].collections;
+        }
+        return b[1].visits - a[1].visits;
+      });
+
+      if (sortedAgents.length === 0) {
+        leaderboardContainer.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No agent records found for this period.</p>';
+        return;
+      }
+
+      leaderboardContainer.innerHTML = '';
+      sortedAgents.forEach(([name, stats], index) => {
+        const rankBadge = index === 0 ? '👑 bg-yellow-100 text-yellow-900 border-yellow-300' : 
+                          index === 1 ? '🥈 bg-gray-100 text-gray-900 border-gray-300' : 
+                          index === 2 ? '🥉 bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-gray-800 border-gray-200';
+
+        const row = document.createElement('div');
+        row.className = `flex justify-between items-center p-2.5 rounded border shadow-sm ${rankBadge} text-sm`;
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-bold w-6 text-center text-xs">#${index + 1}</span>
+            <div>
+              <p class="font-bold text-gray-900">${name}</p>
+              <p class="text-xs text-gray-500">${stats.visits} visits logged</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-green-700">KSh ${stats.collections.toLocaleString()}</p>
+            <p class="text-xs text-blue-600 font-medium">PTP: KSh ${stats.ptp.toLocaleString()}</p>
+          </div>
+        `;
+        leaderboardContainer.appendChild(row);
+      });
     }
 
     function updateChart(visits) {
@@ -544,6 +614,7 @@
       renderTable(filtered);
       updateSummaryCards(filtered);
       updateChart(filtered);
+      updateLeaderboard(filtered);
     }
 
     window.deleteVisit = async function(id) {
