@@ -138,11 +138,11 @@
     </main>
   </div>
 
-  <!-- ADD AGENT MODAL -->
+  <!-- ADD/EDIT AGENT MODAL -->
   <div id="agentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-gray-900 text-base">Add Field Agent</h3>
+        <h3 id="agentModalTitle" class="font-bold text-gray-900 text-base">Add Field Agent</h3>
         <button onclick="closeAddAgentModal()" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
       </div>
       <form onsubmit="saveAgent(event)" class="space-y-3">
@@ -176,6 +176,7 @@
     let allVisits = [];
     let allAgents = [];
     let outcomeChartInstance = null;
+    let editingAgentId = null;
 
     // Check session login state
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
@@ -315,21 +316,76 @@
           const smsMsg = encodeURIComponent(`Hello ${agent.name}, please make sure you look for field accounts and head out for field today.`);
 
           const div = document.createElement('div');
-          div.className = "flex justify-between items-center p-2 rounded border bg-gray-50 text-xs";
+          div.className = "flex justify-between items-center p-2.5 rounded border bg-gray-50 text-xs mb-2";
           div.innerHTML = `
             <div>
               <p class="font-bold text-gray-900">${agent.name}</p>
               <p class="text-gray-500">${agent.phone}</p>
             </div>
-            <div class="flex gap-1">
+            <div class="flex gap-1 items-center">
               <a href="https://wa.me/${cleanPhone}?text=${msg}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-semibold">💬 WhatsApp</a>
               <a href="sms:${cleanPhone}?body=${smsMsg}" class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded font-semibold">✉️ SMS</a>
+              <button onclick="editAgent('${agent.id}', '${agent.name}', '${agent.phone}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded font-semibold">✏️ Edit</button>
+              <button onclick="deleteAgent('${agent.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-semibold">🗑️ Delete</button>
             </div>
           `;
           container.appendChild(div);
         });
       } catch (err) {
         container.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Failed to load agents list.</p>';
+      }
+    }
+
+    function editAgent(id, name, phone) {
+      editingAgentId = id;
+      document.getElementById('modalAgentName').value = name;
+      document.getElementById('modalAgentPhone').value = phone;
+      document.getElementById('agentModalTitle').textContent = 'Edit Field Agent';
+      document.getElementById('agentModal').classList.remove('hidden');
+    }
+
+    async function deleteAgent(id) {
+      if (!confirm("Are you sure you want to delete this agent?")) return;
+
+      try {
+        const { error } = await supabaseAgent.from('agents').delete().eq('id', id);
+        if (error) throw error;
+        fetchAgents();
+      } catch (err) {
+        alert("Failed to delete agent: " + err.message);
+      }
+    }
+
+    function openAddAgentModal() {
+      editingAgentId = null;
+      document.getElementById('modalAgentName').value = '';
+      document.getElementById('modalAgentPhone').value = '';
+      document.getElementById('agentModalTitle').textContent = 'Add Field Agent';
+      document.getElementById('agentModal').classList.remove('hidden');
+    }
+
+    function closeAddAgentModal() {
+      document.getElementById('agentModal').classList.add('hidden');
+    }
+
+    async function saveAgent(e) {
+      e.preventDefault();
+      const name = document.getElementById('modalAgentName').value.trim();
+      const phone = document.getElementById('modalAgentPhone').value.trim();
+
+      try {
+        if (editingAgentId) {
+          const { error } = await supabaseAgent.from('agents').update({ name, phone }).eq('id', editingAgentId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseAgent.from('agents').insert([{ name, phone }]);
+          if (error) throw error;
+        }
+        
+        closeAddAgentModal();
+        fetchAgents();
+      } catch (err) {
+        alert("Failed to save agent: " + err.message);
       }
     }
 
@@ -342,7 +398,6 @@
       
       const phoneNumbers = allAgents.map(a => a.phone.replace(/[^0-9+]/g, '')).join(',');
       const message = encodeURIComponent("Good morning team! Please make sure you look for field accounts and head out for field operations today.");
-      
       window.location.href = `sms:${phoneNumbers}?body=${message}`;
     }
 
@@ -363,32 +418,6 @@
           window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
         }, index * 1200);
       });
-    }
-
-    function openAddAgentModal() {
-      document.getElementById('agentModal').classList.remove('hidden');
-    }
-
-    function closeAddAgentModal() {
-      document.getElementById('agentModal').classList.add('hidden');
-    }
-
-    async function saveAgent(e) {
-      e.preventDefault();
-      const name = document.getElementById('modalAgentName').value.trim();
-      const phone = document.getElementById('modalAgentPhone').value.trim();
-
-      try {
-        const { error } = await supabaseAgent.from('agents').insert([{ name, phone }]);
-        if (error) throw error;
-        
-        closeAddAgentModal();
-        document.getElementById('modalAgentName').value = '';
-        document.getElementById('modalAgentPhone').value = '';
-        fetchAgents();
-      } catch (err) {
-        alert("Failed to save agent: " + err.message);
-      }
     }
 
     function exportToCSV() {
