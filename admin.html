@@ -118,7 +118,7 @@
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-xs whitespace-nowrap">
             <thead class="bg-gray-100 uppercase text-gray-600 border-b">
               <tr>
                 <th class="p-2.5">Agent Name</th>
@@ -178,7 +178,6 @@
     let outcomeChartInstance = null;
     let editingAgentId = null;
 
-    // Check session login state
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
       document.getElementById('authOverlay').classList.add('hidden');
       document.getElementById('dashboardContent').classList.remove('hidden');
@@ -389,7 +388,6 @@
       }
     }
 
-    // Broadcast SMS to all numbers at once
     function broadcastSMS() {
       if (allAgents.length === 0) {
         alert("No registered agents found to send SMS to.");
@@ -401,22 +399,29 @@
       window.location.href = `sms:${phoneNumbers}?body=${message}`;
     }
 
-    // Sequential WhatsApp Broadcast
     function broadcastWhatsApp() {
       if (allAgents.length === 0) {
         alert("No registered agents found.");
         return;
       }
 
-      const confirmSend = confirm(`This will open WhatsApp chats sequentially for ${allAgents.length} agent(s). Do you want to proceed?`);
+      const confirmSend = confirm(`This will open WhatsApp chats for ${allAgents.length} agent(s). Do you want to proceed?`);
       if (!confirmSend) return;
 
       allAgents.forEach((agent, index) => {
         setTimeout(() => {
           const cleanPhone = agent.phone.replace(/[^0-9+]/g, '');
           const msg = encodeURIComponent(`Good morning ${agent.name}, please make sure you look for field accounts and head out for field operations today. Let's hit our targets!`);
-          window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
-        }, index * 1200);
+          
+          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
+          
+          const a = document.createElement('a');
+          a.href = whatsappUrl;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }, index * 1500);
       });
     }
 
