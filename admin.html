@@ -14,7 +14,7 @@
   <div id="authOverlay" class="fixed inset-0 bg-blue-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full space-y-4">
       <h2 class="text-xl font-bold text-gray-900 text-center border-b pb-2">Admin Portal Access</h2>
-      <p class="text-xs text-gray-500 text-center">Please enter administrative passcode to continue.</p>
+      <p class="text-xs text-gray-500 text-center">Please enter administrative passcode to continue (Passcode: 1234).</p>
       
       <form onsubmit="verifyAdminPasscode(event)" class="space-y-3">
         <div>
@@ -114,7 +114,7 @@
           </div>
           
           <div class="flex items-center gap-2">
-            <!-- MONTHLY FILTER (Default to All-Time so data appears immediately) -->
+            <!-- MONTHLY FILTER -->
             <select id="monthFilter" onchange="renderLeaderboard()" class="p-1.5 border rounded text-xs bg-gray-50 font-semibold">
               <option value="all" selected>All-Time Progressive</option>
               <option value="2026-11">November 2026</option>
@@ -189,22 +189,29 @@
     let outcomeChartInstance = null;
     let editingAgentId = null;
 
-    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-      document.getElementById('authOverlay').classList.add('hidden');
-      document.getElementById('dashboardContent').classList.remove('hidden');
-      loadDashboardData();
-    }
+    // Check session login state on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        document.getElementById('authOverlay').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
+        loadDashboardData();
+      }
+    });
 
     function verifyAdminPasscode(e) {
       e.preventDefault();
-      const input = document.getElementById('passcodeInput').value;
+      const input = document.getElementById('passcodeInput').value.trim();
+      const errorMsg = document.getElementById('authError');
+
       if (input === ADMIN_PASSCODE) {
         sessionStorage.setItem('adminLoggedIn', 'true');
         document.getElementById('authOverlay').classList.add('hidden');
         document.getElementById('dashboardContent').classList.remove('hidden');
+        errorMsg.classList.add('hidden');
         loadDashboardData();
       } else {
-        document.getElementById('authError').classList.remove('hidden');
+        errorMsg.classList.remove('hidden');
+        document.getElementById('passcodeInput').value = '';
       }
     }
 
@@ -403,4 +410,78 @@
         }
         
         closeAddAgentModal();
-        
+        fetchAgents();
+      } catch (err) {
+        alert("Failed to save agent: " + err.message);
+      }
+    }
+
+    function broadcastSMS() {
+      if (allAgents.length === 0) {
+        alert("No registered agents found to send SMS to.");
+        return;
+      }
+      
+      const phoneNumbers = allAgents.map(a => a.phone.replace(/[^0-9+]/g, '')).join(',');
+      const message = encodeURIComponent("Good morning team! Please make sure you look for field accounts and head out for field operations today.");
+      window.location.href = `sms:${phoneNumbers}?body=${message}`;
+    }
+
+    function broadcastWhatsApp() {
+      if (allAgents.length === 0) {
+        alert("No registered agents found.");
+        return;
+      }
+
+      const confirmSend = confirm(`This will open WhatsApp chats for ${allAgents.length} agent(s). Do you want to proceed?`);
+      if (!confirmSend) return;
+
+      allAgents.forEach((agent, index) => {
+        setTimeout(() => {
+          const cleanPhone = (agent.phone || '').replace(/[^0-9+]/g, '');
+          const msg = encodeURIComponent(`Good morning ${agent.name}, please make sure you look for field accounts and head out for field operations today. Let's hit our targets!`);
+          
+          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
+          
+          const a = document.createElement('a');
+          a.href = whatsappUrl;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }, index * 1500);
+      });
+    }
+
+    function exportToCSV() {
+      if (allVisits.length === 0) {
+        alert("No data available to export.");
+        return;
+      }
+
+      const headers = ["Date", "Agent Name", "CFID", "Customer Name", "Client Name", "Account Number", "Outcome", "Amount Collected", "Expenses Incurred", "Notes"];
+      const rows = allVisits.map(v => [
+        v.created_at ? new Date(v.created_at).toISOString() : '',
+        `"${v.agent_name || ''}"`,
+        `"${v.cfid || ''}"`,
+        `"${v.customer_name || ''}"`,
+        `"${v.client_name || ''}"`,
+        `"${v.account_number || ''}"`,
+        `"${v.outcome || ''}"`,
+        v.amount_collected || 0,
+        v.expenses_incurred || 0,
+        `"${(v.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Field_Ops_Report_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
